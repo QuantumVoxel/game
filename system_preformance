@@ -13,7 +13,7 @@ OS:ashia linux fedora remix
 CPU:m1
 RAM:8 GB
 GPU:m1 (7 cores)
-opengl:
+opengl: 4.6
 Status:dosent launch
 
 toshiba nb305 
