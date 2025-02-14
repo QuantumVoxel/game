@@ -1,10 +1,27 @@
 how Qauntum voxel preforms on my systems
+template
 OS:
 CPU
 RAM
 GPU
 opengl:
+Status:
+fps :
 
-fps 
+macbook air m1 
+OS:ashia linux fedora remix
+CPU:m1
+RAM:8 GB
+GPU:m1 (7 cores)
+opengl:
+Status:dosent launch
 
+toshiba nb305 
+OS: debain with lxqt
+CPU:Intel Atom N450 @ 1.66GHz
+RAM:2 GB
+GPU: Intel GMA 3150
+opengl:2.0 (wont launch beacuse of gl problelms idk why)
+Status: not launching 
+// needs completi
 mabye some more preformance metrics
