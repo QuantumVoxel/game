@@ -8,6 +8,7 @@ import com.badlogic.gdx.utils.JsonValue
 import dev.ultreon.quantum.blocks.Block
 import dev.ultreon.quantum.blocks.BlockEntity
 import dev.ultreon.quantum.blocks.BlockState
+import dev.ultreon.quantum.commonResources
 import dev.ultreon.quantum.entity.*
 import dev.ultreon.quantum.item.Item
 import dev.ultreon.quantum.logger
@@ -86,11 +87,21 @@ class ContextType<T : Any>(
 
   companion object {
     private val registry = HashMap<String, ContextType<*>>()
-    val resources: ContextType<ResourceManager> = register("resources", parser = { logger.error("Unsupported resources: ${it.trace()}"); return@register null })
-    val resourceLeaf: ContextType<ResourceLeaf> = register("resource-leaf", parser = { logger.error("Unsupported resource leaf: ${it.trace()}"); return@register null })
-    val resourceDirectory: ContextType<ResourceDirectory> = register("resource-directory", parser = { logger.error("Unsupported resource directory: ${it.trace()}"); return@register null })
-    val resourceRoot: ContextType<ResourceRoot> = register("resource-root", parser = { logger.error("Unsupported resource root: ${it.trace()}"); return@register null })
-    val resource: ContextType<Resource> = register("resource", parser = { logger.error("Unsupported resource: ${it.trace()}"); return@register null })
+    val files: ContextType<FilesUtils> = register("files", parser = { ContextValue(this, FilesUtils) })
+    val platform: ContextType<PlatformUtils> = register("platform", parser = { ContextValue(this, PlatformUtils) })
+    val resources: ContextType<ResourceManager> = register("resources", parser = { ContextValue(this, commonResources) })
+    val resourceLeaf: ContextType<ResourceLeaf> = register("resource-leaf", parser = { logger.error("Resource leaves are unparseable: ${it.trace()}"); return@register null })
+    val resourceDirectory: ContextType<ResourceDirectory> = register("resource-directory", parser = { logger.error("Resource directories are unparseable: ${it.trace()}"); return@register null })
+    val resourceRoot: ContextType<ResourceRoot> = register("resource-root", parser = { ContextValue(this, commonResources.root) })
+    val resource: ContextType<Resource> = register("resource", parser = { json ->
+      val id = json.get("id").asString().asIdOrNull() ?: throw IllegalArgumentException(
+        "Invalid ID: ${
+          json.get("id").asString()
+        }"
+      )
+      return@register commonResources[id]?.let { resource -> ContextValue(this, resource) }
+        ?: throw IllegalArgumentException("Unknown resource: ${json.get("id").asString()}")
+    })
     val entityTemplate: ContextType<EntityTemplate> = register("entity-template", parser = { json ->
       val id = json.get("id").asString().asIdOrNull() ?: throw IllegalArgumentException(
         "Invalid ID: ${
@@ -274,30 +285,30 @@ class ContextType<T : Any>(
       }
     }, serializer = {
       val m = it
-      m.`val`.json()
+      m.`val`.`null`()
     })
     val int: ContextType<Int> = register("int", parser = { json -> ContextValue(this, json.asInt()) }, serializer = {
-      it.json()
+      it.`null`()
     })
     val long: ContextType<Long> =
       register("int64", parser = { json -> ContextValue(this, json.asLong()) }, serializer = {
-        it.json()
+        it.`null`()
       })
     val float: ContextType<Float> =
       register("float", parser = { json -> ContextValue(this, json.asFloat()) }, serializer = {
-        it.json()
+        it.`null`()
       })
     val double: ContextType<Double> =
       register("float64", parser = { json -> ContextValue(this, json.asDouble()) }, serializer = {
-        it.json()
+        it.`null`()
       })
     val string: ContextType<String> =
       register("string", parser = { json -> ContextValue(this, json.asString()) }, serializer = {
-        it.json()
+        it.`null`()
       })
     val boolean: ContextType<Boolean> =
       register("boolean", parser = { json -> ContextValue(this, json.asBoolean()) }, serializer = {
-        it.json()
+        it.`null`()
       })
 
     @OptIn(ExperimentalEncodingApi::class)
@@ -309,11 +320,11 @@ class ContextType<T : Any>(
         logger.error("Failed to decode base64: $base64", e)
         return@register null
       }
-    }, serializer = { it.json() })
+    }, serializer = { it.`null`() })
     val json: ContextType<JsonValue> = register(
       "json",
       parser = { json -> ContextValue(this, json) },
-      serializer = { it.json() }
+      serializer = { it.`null`() }
     )
     val id: ContextType<NamespaceID> = register(
       "id",
@@ -397,11 +408,11 @@ class ContextType<T : Any>(
       return@register ContextValue(this, function(json.get("context")))
     })
 
-    val core: ContextType<CoreUtils> = register("core", parser = { json ->
+    val core: ContextType<CoreUtils> = register("core", parser = {
       return@register ContextValue(this, CoreUtils)
     })
 
-    val math: ContextType<MathUtils> = register("math", parser = { json ->
+    val math: ContextType<MathUtils> = register("math", parser = {
       return@register ContextValue(this, MathUtils)
     })
 
@@ -439,7 +450,7 @@ class ContextType<T : Any>(
   }
 }
 
-fun FloatArray.json(): JsonValue? {
+fun FloatArray.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.array).also {
     forEach { value ->
       it.addChild(JsonValue(value.toDouble()))
@@ -447,7 +458,7 @@ fun FloatArray.json(): JsonValue? {
   }
 }
 
-fun DoubleArray.json(): JsonValue? {
+fun DoubleArray.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.array).also {
     forEach { value ->
       it.addChild(JsonValue(value))
@@ -455,7 +466,7 @@ fun DoubleArray.json(): JsonValue? {
   }
 }
 
-fun IntArray.json(): JsonValue? {
+fun IntArray.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.array).also {
     forEach { value ->
       it.addChild(JsonValue(value.toLong()))
@@ -463,7 +474,7 @@ fun IntArray.json(): JsonValue? {
   }
 }
 
-fun LongArray.json(): JsonValue? {
+fun LongArray.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.array).also {
     forEach { value ->
       it.addChild(JsonValue(value))
@@ -472,48 +483,48 @@ fun LongArray.json(): JsonValue? {
 }
 
 @OptIn(ExperimentalEncodingApi::class)
-fun ByteArray.json(): JsonValue? {
+fun ByteArray.`null`(): JsonValue {
   val base64 = Base64.encode(this)
   return JsonValue(base64)
 }
 
-fun JsonValue.json(): JsonValue? {
+fun JsonValue.`null`(): JsonValue {
   return this
 }
 
-fun Int.json(): JsonValue? {
+fun Int.`null`(): JsonValue {
   return JsonValue(this.toLong())
 }
 
-fun Long.json(): JsonValue? {
+fun Long.`null`(): JsonValue {
   return JsonValue(this)
 }
 
-fun Float.json(): JsonValue? {
+fun Float.`null`(): JsonValue {
   return JsonValue(this.toDouble())
 }
 
-fun Double.json(): JsonValue? {
+fun Double.`null`(): JsonValue {
   return JsonValue(this)
 }
 
-fun String.json(): JsonValue? {
+fun String.`null`(): JsonValue {
   return JsonValue(this)
 }
 
-fun Boolean.json(): JsonValue? {
+fun Boolean.`null`(): JsonValue {
   return JsonValue(this)
 }
 
-fun NamespaceID.json(): JsonValue? {
+fun NamespaceID.`null`(): JsonValue {
   return JsonValue(this.toString())
 }
 
-fun Nothing?.json(): JsonValue {
+fun `null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.nullValue)
 }
 
-fun List<JsonValue>.json(): JsonValue {
+fun List<JsonValue>.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.array).also {
     forEach { value ->
       it.addChild(value)
@@ -521,10 +532,10 @@ fun List<JsonValue>.json(): JsonValue {
   }
 }
 
-fun BoundingBoxD.json(): JsonValue {
+fun BoundingBoxD.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
-    it.addChild("min", min.json())
-    it.addChild("max", max.json())
+    it.addChild("min", min.`null`())
+    it.addChild("max", max.`null`())
   }
 }
 
@@ -533,7 +544,7 @@ fun BoundingBoxD.load(json: JsonValue) {
   max.load(json.get("max"))
 }
 
-fun Vector3D.json(): JsonValue {
+fun Vector3D.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
     it.addChild("x", JsonValue(x))
     it.addChild("y", JsonValue(y))
@@ -547,10 +558,10 @@ fun Vector3D.load(json: JsonValue) {
   z = json.get("z").asDouble()
 }
 
-fun BoundingBox.json(): JsonValue {
+fun BoundingBox.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
-    it.addChild("min", min.json())
-    it.addChild("max", max.json())
+    it.addChild("min", min.`null`())
+    it.addChild("max", max.`null`())
   }
 }
 
@@ -559,7 +570,7 @@ fun BoundingBox.load(json: JsonValue) {
   max.load(json.get("max"))
 }
 
-fun Vector3.json(): JsonValue {
+fun Vector3.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
     it.addChild("x", JsonValue(x.toDouble()))
     it.addChild("y", JsonValue(y.toDouble()))
@@ -573,7 +584,7 @@ fun Vector3.load(json: JsonValue) {
   z = json.get("z").asFloat()
 }
 
-fun Vector2.json(): JsonValue {
+fun Vector2.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
     it.addChild("x", JsonValue(x.toDouble()))
     it.addChild("y", JsonValue(y.toDouble()))
@@ -585,7 +596,7 @@ fun Vector2.load(json: JsonValue) {
   y = json.get("y").asFloat()
 }
 
-fun GridPoint3.json(): JsonValue {
+fun GridPoint3.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
     it.addChild("x", JsonValue(x.toDouble()))
     it.addChild("y", JsonValue(y.toDouble()))
@@ -599,7 +610,7 @@ fun GridPoint3.load(json: JsonValue) {
   z = json.get("z").asInt()
 }
 
-fun GridPoint2.json(): JsonValue {
+fun GridPoint2.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
     it.addChild("x", JsonValue(x.toDouble()))
     it.addChild("y", JsonValue(y.toDouble()))
@@ -611,7 +622,7 @@ fun GridPoint2.load(json: JsonValue) {
   y = json.get("y").asInt()
 }
 
-fun Quaternion.json(): JsonValue {
+fun Quaternion.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
     it.addChild("x", JsonValue(x.toDouble()))
     it.addChild("y", JsonValue(y.toDouble()))
@@ -627,7 +638,7 @@ fun Quaternion.load(json: JsonValue) {
   w = json.get("w").asFloat()
 }
 
-fun Vector4.json(): JsonValue {
+fun Vector4.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
     it.addChild("x", JsonValue(x.toDouble()))
     it.addChild("y", JsonValue(y.toDouble()))
@@ -643,7 +654,7 @@ fun Vector4.load(json: JsonValue) {
   w = json.get("w").asFloat()
 }
 
-fun Color.json(): JsonValue {
+fun Color.`null`(): JsonValue {
   return JsonValue(JsonValue.ValueType.`object`).also {
     it.addChild("rgb", JsonValue(toIntBits().toLong()))
   }

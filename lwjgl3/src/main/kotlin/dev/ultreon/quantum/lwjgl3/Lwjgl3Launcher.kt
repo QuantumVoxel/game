@@ -5,11 +5,12 @@ package dev.ultreon.quantum.lwjgl3
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.utils.Os
 import com.badlogic.gdx.utils.SharedLibraryLoader
-import dev.ultreon.quantum.Logger
-import dev.ultreon.quantum.LoggerFactory
+import dev.ultreon.quantum.*
+import dev.ultreon.quantum.async.AsyncExecutor
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.client.*
-import dev.ultreon.quantum.factory
 import dev.ultreon.quantum.resource.ResourceManager
+import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.Path
@@ -135,6 +136,37 @@ abstract class DesktopPlatform(val logger: Logger) : GamePlatform {
     resourceManager.loadFromAssetsTxt(Gdx.files.internal("assets.txt"))
   }
 
+  override val isDesktop: Boolean
+    get() = true
+
+  override val isWindows: Boolean
+    get() = SharedLibraryLoader.os == Os.Windows
+
+  override val isLinux: Boolean
+    get() = SharedLibraryLoader.os == Os.Linux
+
+  override val isMac: Boolean
+    get() = SharedLibraryLoader.os == Os.MacOsX
+
+  override val isDebug: Boolean
+    get() = ManagementFactory.getRuntimeMXBean().inputArguments.any { "jdwp" in it || "-Xdebug" in it || "-Xrunjdwp" in it }
+
+  override fun cpuCores(): Int {
+    return Runtime.getRuntime().availableProcessors()
+  }
+
+  override fun yield() {
+    Thread.yield()
+  }
+
+  override fun sleep(i: Int) {
+    Thread.sleep(i.toLong())
+  }
+
+  override fun halt(i: Int) {
+    Runtime.getRuntime().halt(i)
+  }
+
   override val isMobile: Boolean
     get() = false
 
@@ -153,6 +185,14 @@ abstract class DesktopPlatform(val logger: Logger) : GamePlatform {
           Runtime.getRuntime().halt(1)
         }
       }
+  }
+
+  override fun createAsyncExecutor(maxConcurrent: Int, name: String): AsyncExecutor {
+    return Lwjgl3AsyncExecutor(maxConcurrent, name)
+  }
+
+  override fun <T> createFuture(): Future<T> {
+    return Lwjgl3Future()
   }
 }
 

@@ -2,13 +2,12 @@ package dev.ultreon.quantum.entity
 
 import com.badlogic.gdx.utils.JsonValue
 import dev.ultreon.quantum.math.BoundingBoxD
-import dev.ultreon.quantum.scripting.json
+import dev.ultreon.quantum.scripting.`null`
 import dev.ultreon.quantum.scripting.load
 import dev.ultreon.quantum.util.BoundingBoxUtils
 import dev.ultreon.quantum.util.Tickable
 import dev.ultreon.quantum.vec3d
 import dev.ultreon.quantum.world.Dimension
-import kotlin.math.abs
 
 private val tmp1 = vec3d()
 private val tmp2 = vec3d()
@@ -261,7 +260,7 @@ class PhysicsComponent : Component<PhysicsComponent>(), Tickable {
       json.addChild("wasOnGround", JsonValue(wasOnGround))
       json.addChild("onGround", JsonValue(onGround))
       json.addChild("noClip", JsonValue(noClip))
-      json.addChild("boundingBox", boundingBox.json())
+      json.addChild("boundingBox", boundingBox.`null`())
     }
   }
 

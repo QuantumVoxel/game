@@ -1,3 +1,6 @@
+@file:SkipClass
+@file:JvmName("TeaVMBuilder")
+
 package dev.ultreon.quantum.teavm
 
 import com.github.xpenatan.gdx.backends.teavm.config.AssetFileHandle
@@ -12,40 +15,33 @@ import java.io.File
 import kotlin.io.path.Path
 import kotlin.io.path.writeText
 
-/** Builds the TeaVM/HTML application. */
-@SkipClass
-object TeaVMBuilder {
-  @JvmStatic
-  fun main(arguments: Array<String>) {
-    val teaBuildConfiguration = TeaBuildConfiguration().apply {
-      assetsPath.add(AssetFileHandle("../assets"))
-      assetsPath.add(AssetFileHandle("src/main/res"))
-      webappPath = File("build/dist").canonicalPath
-      // Register any extra classpath assets here:
-      // additionalAssetsClasspathFiles += "dev/ultreon/quantum/asset.extension"
+fun main() {
+  val teaBuildConfiguration = TeaBuildConfiguration().apply {
+    assetsPath.add(AssetFileHandle("../assets"))
+    assetsPath.add(AssetFileHandle("src/main/res"))
+    webappPath = File("build/dist").canonicalPath
+    // Register any extra classpath assets here:
+    // additionalAssetsClasspathFiles += "dev/ultreon/quantum/asset.extension"
 
-      htmlTitle = "Quantum Voxel"
-      useDefaultHtmlIndex = false
+    htmlTitle = "Quantum Voxel"
+    useDefaultHtmlIndex = false
 
-      this.showLoadingLogo = true
-      this.logoPath = "logo.png"
-    }
+    this.showLoadingLogo = true
+    this.logoPath = "logo.png"
+  }
 
-    // Register any classes or packages that require reflection here:
-    // TeaReflectionSupplier.addReflectionClass("dev.ultreon.quantum.reflect")
+  // Register any classes or packages that require reflection here:
+  // TeaReflectionSupplier.addReflectionClass("dev.ultreon.quantum.reflect")
 
-    val tool: TeaVMTool = TeaBuilder.config(teaBuildConfiguration)
-    tool.mainClass = "dev.ultreon.quantum.teavm.TeaVMLauncher"
-    tool.optimizationLevel = TeaVMOptimizationLevel.SIMPLE
-    tool.targetType = TeaVMTargetType.JAVASCRIPT
-    tool.isFastDependencyAnalysis = true
-    tool.isIncremental = true
-    tool.classLoader = ClassLoader.getSystemClassLoader()
-    tool.setObfuscated(false)
+  val tool: TeaVMTool = TeaBuilder.config(teaBuildConfiguration)
+  tool.mainClass = "dev.ultreon.quantum.teavm.TeaVMLauncher"
+  tool.optimizationLevel = TeaVMOptimizationLevel.SIMPLE
+  tool.targetType = TeaVMTargetType.JAVASCRIPT
+  tool.setObfuscated(false)
 
-    @Suppress("HtmlUnknownTarget")
-    @Language("HTML")
-    val text = """
+  @Suppress("HtmlUnknownTarget")
+  @Language("HTML")
+  val text = """
       |<!DOCTYPE html>
       |<html lang="en">
       |<head>
@@ -138,8 +134,7 @@ object TeaVMBuilder {
       |</body>
       |</html>
     """.trimMargin()
-    Path("build/dist/index.html").writeText(text)
+  Path("build/dist/webapp/index.html").writeText(text)
 
-    TeaBuilder.build(tool)
-  }
+  TeaBuilder.build(tool)
 }

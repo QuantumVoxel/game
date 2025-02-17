@@ -98,10 +98,12 @@ public class TeaInput implements Input, EventListenerWrapper {
 
     @Override
     public void handleEvent(EventWrapper e) {
-        if (application.getApplicationListener() != null) {
-            handleMouseEvents(e);
-            handleKeyboardEvents(e);
-        }
+        Gdx.app.postRunnable(() -> {
+            if (application.getApplicationListener() != null) {
+                handleMouseEvents(e);
+                handleKeyboardEvents(e);
+            }
+        });
     }
 
     private void handleMouseEvents(EventWrapper e) {

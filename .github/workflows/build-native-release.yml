@@ -10,11 +10,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -29,8 +25,8 @@ jobs:
         if: runner.os != 'Windows'
         run: chmod +x gradlew
 
-      - name: Run Native Compile
-        run: ./gradlew nativeCompile "-Pversion=${{ github.event.release.tag_name }}"
+      - name: Run Compile
+        run: ./gradlew distrib
         env:
           USERNAME: ${{ secrets.GITHUB_ACTOR }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -39,7 +35,7 @@ jobs:
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: lwjgl3/build/native/nativeCompile/**
+          files: lwjgl3/build/distributions/launcher-package.zip
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Release Assets

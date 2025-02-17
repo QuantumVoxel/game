@@ -23,8 +23,8 @@ jobs:
       - name: Grant execute permission for Gradle
         run: chmod +x gradlew
 
-      - name: Run Native Compile
-        run: ./gradlew nativeCompile -Psnapshot=true
+      - name: Run Compile
+        run: ./gradlew distrib -Psnapshot=true
         env:
           USERNAME: ${{ secrets.GITHUB_ACTOR }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -34,5 +34,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-binaries
-          path: lwjgl3/build/native/nativeCompile/**
+          path: lwjgl3/build/distributions/launcher-package.zip
           retention-days: 2

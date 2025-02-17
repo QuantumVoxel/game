@@ -6,6 +6,7 @@ import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.resource.asDir
 import dev.ultreon.quantum.resource.asLeaf
 import dev.ultreon.quantum.scripting.*
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.scripting.qfunc.QFuncInterpreter
 
 abstract class VirtualFunction(
@@ -14,13 +15,13 @@ abstract class VirtualFunction(
 ) :
   ContextAware<VirtualFunction> {
 
-  abstract suspend fun call(context: CallContext): ContextValue<*>?
+  abstract fun call(context: CallContext): Future<ContextValue<*>?>
 
   override fun contextType(): ContextType<VirtualFunction> {
     return ContextType.function
   }
 
-  suspend fun call(json: JsonValue): ContextValue<*>? {
+  fun call(json: JsonValue): Future<ContextValue<*>?> {
     val callContext = CallContext(json)
     for ((name, param) in params) {
       callContext[name] = param.of(json) ?: continue
@@ -28,19 +29,19 @@ abstract class VirtualFunction(
     return call(callContext)
   }
 
-  suspend fun call(json: JsonValue, context: ContextAware<*>): ContextValue<*>? {
+  fun call(json: JsonValue, context: ContextAware<*>): Future<ContextValue<*>?> {
     val callContext = CallContext(json)
     callContext[context.contextType()] = context
     return call(callContext)
   }
 
-  suspend fun call(json: JsonValue, map: Map<String, ContextValue<*>>): ContextValue<*>? {
+  fun call(json: JsonValue, map: Map<String, ContextValue<*>>): Future<ContextValue<*>?> {
     val callContext = CallContext(json)
     map.forEach { (name, value) -> callContext[name] = value }
     return call(callContext)
   }
 
-  suspend fun call(json: JsonValue, vararg values: ContextValue<*>): ContextValue<*>? {
+  fun call(json: JsonValue, vararg values: ContextValue<*>): Future<ContextValue<*>?> {
     val callContext = CallContext(json)
     values.forEachIndexed { i, it -> callContext[i.toString()] = it }
     return call(callContext)
@@ -51,10 +52,10 @@ abstract class VirtualFunction(
       VirtualFunctions.register0(name, function)
     }
 
-    fun register(name: String, vararg params: ContextParam<*>, function: suspend (CallContext) -> ContextValue<*>?) {
+    fun register(name: String, vararg params: ContextParam<*>, function: (CallContext) -> Future<ContextValue<*>?>) {
       VirtualFunctions.register0(name, { json ->
         object : VirtualFunction(params.associateBy { it.name }.toMutableMap(), contextJson = json) {
-          override suspend fun call(context: CallContext): ContextValue<*>? {
+          override fun call(context: CallContext): Future<ContextValue<*>?> {
             return function(context)
           }
 
@@ -112,12 +113,16 @@ object VirtualFunctions {
   fun register(
     name: String,
     vararg params: ContextParam<*>,
-    function: suspend (context: CallContext) -> ContextValue<*>?
+    function: (context: CallContext) -> ContextValue<*>?
   ) {
     register0(name, { json ->
-      object : VirtualFunction(contextJson = json) {
-        override suspend fun call(context: CallContext): ContextValue<*>? {
-          return function(context)
+      object : VirtualFunction(contextJson = json, params = params.associateBy { it.name }.toMutableMap()) {
+        override fun call(context: CallContext): Future<ContextValue<*>?> {
+          return try {
+            Future.completed(function(context))
+          } catch (t: Throwable) {
+            Future.failed(t)
+          }
         }
 
         override val persistentData: PersistentData = PersistentData()
@@ -140,12 +145,12 @@ object VirtualFunctions {
 
 }
 
-fun function(vararg params: ContextParam<*>, function: suspend (CallContext) -> ContextValue<*>?): VirtualFunction {
+fun functionFuture(vararg params: ContextParam<*>, function: (CallContext) -> Future<ContextValue<*>?>): VirtualFunction {
   return object : VirtualFunction(
     params.associateBy { it.name }.toMutableMap(),
     contextJson = JsonValue(JsonValue.ValueType.nullValue)
   ) {
-    override suspend fun call(context: CallContext): ContextValue<*>? {
+    override fun call(context: CallContext): Future<ContextValue<*>?> {
       val errors = ArrayList<String>()
       for (param in params) {
         if (context.paramValues[param.name] == null) {
@@ -164,6 +169,70 @@ fun function(vararg params: ContextParam<*>, function: suspend (CallContext) -> 
       }
 
       return function(context)
+    }
+
+    override val persistentData: PersistentData = PersistentData()
+  }
+}
+
+fun functionAsync(vararg params: ContextParam<*>, function: (CallContext) -> ContextValue<*>?): VirtualFunction {
+  return object : VirtualFunction(
+    params.associateBy { it.name }.toMutableMap(),
+    contextJson = JsonValue(JsonValue.ValueType.nullValue)
+  ) {
+    override fun call(context: CallContext): Future<ContextValue<*>?> {
+      val errors = ArrayList<String>()
+      for (param in params) {
+        if (context.paramValues[param.name] == null) {
+          errors += "Missing parameter '${param.name}'"
+        }
+      }
+
+      for (paramValue in context.paramValues.keys) {
+        if (!params.any { it.name == paramValue }) {
+          errors += "Unknown parameter: '$paramValue'"
+        }
+      }
+
+      if (errors.isNotEmpty()) {
+        return Future.failed(IllegalArgumentException("\n" + errors.joinToString("\n") { it.prependIndent("  ") } + "\n"))
+      }
+
+      return Future.supplyAsync { function(context) }
+    }
+
+    override val persistentData: PersistentData = PersistentData()
+  }
+}
+
+fun function(vararg params: ContextParam<*>, function: (CallContext) -> ContextValue<*>?): VirtualFunction {
+  return object : VirtualFunction(
+    params.associateBy { it.name }.toMutableMap(),
+    contextJson = JsonValue(JsonValue.ValueType.nullValue)
+  ) {
+    override fun call(context: CallContext): Future<ContextValue<*>?> {
+      try {
+        val errors = ArrayList<String>()
+        for (param in params) {
+          if (context.paramValues[param.name] == null) {
+            errors += "Missing parameter '${param.name}'"
+          }
+        }
+
+        for (paramValue in context.paramValues.keys) {
+          if (!params.any { it.name == paramValue }) {
+            errors += "Unknown parameter: '$paramValue'"
+          }
+        }
+
+        if (errors.isNotEmpty()) {
+          return Future.failed(IllegalArgumentException("\n" + errors.joinToString("\n") { it.prependIndent("  ") } + "\n"))
+        }
+
+        return Future.completed(function(context))
+      } catch (e: Throwable) {
+        return Future.failed(e)
+      }
     }
 
     override val persistentData: PersistentData = PersistentData()

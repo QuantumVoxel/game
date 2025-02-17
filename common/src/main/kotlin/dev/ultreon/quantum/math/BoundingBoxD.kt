@@ -23,7 +23,7 @@ class BoundingBoxD {
   private val cnt: Vector3D = Vector3D()
   private val dim: Vector3D = Vector3D()
 
-  // NOTE: Added 6-parameter constructor for use in Block#getBoundingBox - by XyperCode (Ultreon)
+  // NOTE: Added 6-parameter constructor for use in Block#getBoundingBox - by Qubilux (Ultreon)
   constructor(minX: Double, minY: Double, minZ: Double, maxX: Double, maxY: Double, maxZ: Double) : this(
     Vector3D(
       minX,

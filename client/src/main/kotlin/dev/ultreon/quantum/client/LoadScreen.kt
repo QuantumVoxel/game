@@ -11,10 +11,8 @@ import dev.ultreon.quantum.client.input.KeyMovement
 import dev.ultreon.quantum.client.input.TouchMovement
 import dev.ultreon.quantum.client.model.ModelRegistry
 import dev.ultreon.quantum.logger
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.util.id
-import kotlinx.coroutines.launch
-import ktx.async.KtxAsync
-import kotlin.concurrent.thread
 
 class LoadScreen : Screen() {
   private var loaded: Boolean = false
@@ -33,7 +31,7 @@ class LoadScreen : Screen() {
       logger.warn("LoadScreen was already initialized!")
       return
     }
-    t = thread {
+    t = Thread {
       try {
         message = "Loading textures..."
         textureManager.init()
@@ -51,7 +49,7 @@ class LoadScreen : Screen() {
         ModelRegistry.loadModels()
 
         message = "Initializing..."
-        KtxAsync.launch {
+        QuantumVoxel {
           quantum.keyMovement = KeyMovement()
           quantum.touchMovement = TouchMovement(null)
           quantum.controllerMovement = ControllerMovement()
@@ -71,6 +69,8 @@ class LoadScreen : Screen() {
         e.printStackTrace()
         crash = e.stackTrace
       }
+    }.apply {
+      start()
     }
 
     super.show()

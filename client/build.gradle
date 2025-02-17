@@ -2,59 +2,12 @@ import com.github.gradle.node.npm.task.NpmTask
 
 plugins {
     id "com.github.node-gradle.node" version "7.0.1"
-    id "antlr"
 }
 
 node {
     version.set("18.0.0") // Set Node.js version
     npmVersion.set("9.0.0") // Set npm version
     download.set(true) // Auto-download Node.js
-}
-
-tasks.register("npmDlcCoreInstall", NpmTask) {
-    dependsOn("package")
-    mustRunAfter("package")
-
-    inputs.file("src/dlc-core/typescript/package.json")
-    inputs.files(fileTree(dir: "src/dlc-core/typescript", include: "**/*.ts"))
-    inputs.file("src/dlc-core/typescript/quantum-voxel.tgz")
-    outputs.dir("src/dlc-core/resources/scripts/@ultreon/quantum-dlc-core")
-
-    workingDir.set(file("src/dlc-core/typescript"))
-    args.set(["update"])
-
-}
-
-tasks.register("npmDlcExtendedInstall", NpmTask) {
-    dependsOn("package")
-    mustRunAfter("package")
-
-    inputs.file("src/dlc-extended/typescript/package.json")
-    inputs.files(fileTree(dir: "src/dlc-extended/typescript", include: "**/*.ts"))
-    inputs.file("src/dlc-extended/typescript/quantum-voxel.tgz")
-    outputs.dir("src/dlc-extended/resources/scripts/@ultreon/quantum-dlc-extended")
-
-    workingDir.set(file("src/dlc-extended/typescript"))
-    args.set(["update"])
-}
-
-tasks.register("npmInstallAll") {
-    dependsOn("npmDlcCoreInstall")
-    dependsOn("npmDlcExtendedInstall")
-}
-
-tasks.register("compileDlcCoreTypeScript", NpmTask) {
-    dependsOn("npmDlcCoreInstall") // Ensure dependencies are installed before compiling
-
-    workingDir.set(file("src/dlc-core/typescript"))
-    args.set(["run", "build"]) // Assumes you have a `build` script in package.json
-}
-
-tasks.register("compileDlcExtendedTypeScript", NpmTask) {
-    dependsOn("npmDlcExtendedInstall") // Ensure dependencies are installed before compiling
-
-    workingDir.set(file("src/dlc-extended/typescript"))
-    args.set(["run", "build"]) // Assumes you have a `build` script in package.json
 }
 
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
@@ -70,15 +23,11 @@ eclipse.project.name = appName + '-client'
 tasks.register("zipDlcCore", Zip) {
     from processDlcCoreResources.inputs.files
     archiveFileName = "dlc-core.qvcontent"
-
-    dependsOn("compileDlcCoreTypeScript")
 }
 
 tasks.register("zipDlcExtended", Zip) {
     from processDlcExtendedResources.inputs.files
     archiveFileName = "dlc-extended.qvcontent"
-
-    dependsOn("compileDlcExtendedTypeScript")
 }
 
 afterEvaluate {
@@ -88,54 +37,6 @@ afterEvaluate {
 
     processDlcExtendedResources {
         dependsOn(":client:npmDlcExtendedInstall", "zipDlcExtended")
-    }
-}
-
-tasks.register("generateTypeScript", JavaExec) {
-    doFirst {
-        delete(fileTree(dir: "src/generated/", includes: ["**/*.ts"]).files)
-    }
-
-    classpath = configurations["compileClasspath"] + configurations["runtimeClasspath"] + compileJava.outputs.files + compileKotlin.outputs.files
-    mainClass = "dev.ultreon.quantum.generator.MainKt"
-    args = [".", "@ultreon/quantum-voxel"]
-
-    workingDir = file("src/generated")
-}
-
-tasks.register("package", Tar) {
-    dependsOn("generateTypeScript")
-
-    outputs.upToDateWhen { false }
-
-    archiveFileName = "quantum-voxel.tgz"
-
-    from("src/generated") {
-        exclude("*.tgz")
-        into("package")
-    }
-
-    outputs.file(file("src/generated/quantum-voxel.tgz"))
-    outputs.file(file("src/dlc-core/typescript/quantum-voxel.tgz"))
-    outputs.file(file("src/dlc-extended/typescript/quantum-voxel.tgz"))
-
-    doLast {
-        copy {
-            from tasks.named("package").get().archivePath
-            into file("src/generated")
-
-            rename { "quantum-voxel.tgz" }
-        }
-
-        copy {
-            from tasks.named("package").get().archivePath
-            into file("src/dlc-core/typescript")
-        }
-
-        copy {
-            from tasks.named("package").get().archivePath
-            into file("src/dlc-extended/typescript")
-        }
     }
 }
 
@@ -167,13 +68,6 @@ sourceSets {
     }
 }
 
-generateGrammarSource {
-    maxHeapSize = "100m"
-    arguments += ["-visitor", "-long-messages"]
-    arguments += ["-package", "dev.ultreon.quantum.scripting.qfunc"]
-    outputDirectory = file("$projectDir/src/main/java/dev/ultreon/quantum/scripting/qfunc")
-}
-
 dependencies {
     api project(':common')
 
@@ -185,11 +79,8 @@ dependencies {
     api "io.github.libktx:ktx-app:$ktxVersion"
     api "io.github.libktx:ktx-artemis:$ktxVersion"
     api "io.github.libktx:ktx-ashley:$ktxVersion"
-    api "io.github.libktx:ktx-assets-async:$ktxVersion"
     api "io.github.libktx:ktx-assets:$ktxVersion"
-    api "io.github.libktx:ktx-async:$ktxVersion"
     api "io.github.libktx:ktx-collections:$ktxVersion"
-    api "io.github.libktx:ktx-freetype-async:$ktxVersion"
     api "io.github.libktx:ktx-freetype:$ktxVersion"
     api "io.github.libktx:ktx-graphics:$ktxVersion"
     api "io.github.libktx:ktx-i18n:$ktxVersion"
@@ -206,7 +97,6 @@ dependencies {
     api "io.github.libktx:ktx-vis:$ktxVersion"
     api "net.onedaybeard.artemis:artemis-odb:$artemisOdbVersion"
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-//  api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesVersion"
     api "space.earlygrey:shapedrawer:$shapeDrawerVersion"
 
     implementation 'com.caoccao.javet:javet:4.1.1'
