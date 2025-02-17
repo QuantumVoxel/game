@@ -101,7 +101,7 @@ class GreedyMesher {
 
   fun buildMeshFromQuads(quads: List<Quad>, modelBuilder: ModelBuilder, material: Material): ModelBuilder {
     // Start building the model
-    val partBuilder: MeshPartBuilder = QuantumVoxel.invoke {
+    val partBuilder: MeshPartBuilder = QuantumVoxel {
       modelBuilder.part(
         "meshPart",
         com.badlogic.gdx.graphics.GL20.GL_TRIANGLES,

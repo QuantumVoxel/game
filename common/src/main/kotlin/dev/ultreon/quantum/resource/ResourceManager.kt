@@ -6,6 +6,7 @@ import com.badlogic.gdx.utils.JsonValue
 import dev.ultreon.quantum.LoggerFactory
 import dev.ultreon.quantum.scripting.*
 import dev.ultreon.quantum.scripting.function.function
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.util.NamespaceID
 import java.io.ByteArrayOutputStream
 import java.util.zip.ZipInputStream
@@ -33,6 +34,8 @@ class ResourceManager(
     function = {
       it.get<NamespaceID>("location")?.let { location ->
         return@function ContextValue(ContextType.resource, get(location) ?: return@function null)
+      } ?: run {
+        throw IllegalArgumentException("Missing parameter: location")
       }
     }
   )

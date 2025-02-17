@@ -24,92 +24,93 @@ dependencies {
   implementation project(':client')
 }
 
-task transpile(dependsOn: 'build') {
-  dependsOn "zipAssets"
+tasks.register('transpile') {
+    dependsOn 'build'
+    dependsOn "zipAssets"
 
-  doLast {
-    delete "$buildDir/dist"
+    doLast {
+        delete "$buildDir/dist"
 
-    List libs = []
-    configurations.runtimeClasspath.asList().stream()
-      .filter({ file -> !file.isDirectory() })
-      .forEach({ file -> libs.add(file.absolutePath) })
+        List libs = []
+        configurations.runtimeClasspath.asList().stream()
+                .filter({ file -> !file.isDirectory() })
+                .forEach({ file -> libs.add(file.absolutePath) })
 
-    javaexec {
-      main = "-jar"
-      args = ["$configurations.transpiler.singleFile.absolutePath", "--input"] + libs + [
-        "$configurations.switchgdx.singleFile.absolutePath",
-        "$buildDir/classes",
-        "$rootDir/core/build/classes",
-        "--output", "$buildDir/dist",
-        "--config", "$projectDir/switch.json"
-      ]
-    }
-
-    copy {
-      from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-      include "*.cpp", "**/*.cpp"
-      include "*.hpp", "**/*.hpp"
-      include "*.h", "**/*.h"
-      include "*.c", "**/*.c"
-      into "$buildDir/dist/src"
-      includeEmptyDirs = false
-    }
-
-    copy {
-      from(configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }) {
-        exclude "**/*.class"
-        exclude "META-INF", "META-INF/**"
-        exclude "**/*.gwt.xml"
-        exclude "**.cpp", "**/*.cpp"
-        exclude "**.hpp", "**/*.hpp"
-        exclude "**.h", "**/*.h"
-        exclude "**.c", "**/*.c"
-        exclude "switchgdx/**"
-      }
-      into "$buildDir/dist/romfs/classpath"
-      includeEmptyDirs = false
-    }
-
-    copy {
-      from "$rootDir/assets"
-      into "$buildDir/dist/romfs"
-    }
-
-    copy {
-      from "$rootDir/build/modules"
-      into "$buildDir/dist/romfs"
-    }
-
-    copy {
-      from "$projectDir/icon.jpg"
-      into "$buildDir/dist"
-    }
-
-    copy {
-      from({ zipTree("$configurations.switchgdx.singleFile.absolutePath") }) {
-        include "switchgdx/project/**"
-        eachFile { fcd ->
-          fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(2))
+        javaexec {
+            main = "-jar"
+            args = ["$configurations.transpiler.singleFile.absolutePath", "--input"] + libs + [
+                    "$configurations.switchgdx.singleFile.absolutePath",
+                    "$buildDir/classes",
+                    "$rootDir/core/build/classes",
+                    "--output", "$buildDir/dist",
+                    "--config", "$projectDir/switch.json"
+            ]
         }
-      }
-      into "$buildDir/dist"
-    }
-    delete "$buildDir/dist/switchgdx"
 
-    copy {
-      from(fileTree("res"))
-      into "$buildDir/dist"
-    }
+        copy {
+            from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+            include "*.cpp", "**/*.cpp"
+            include "*.hpp", "**/*.hpp"
+            include "*.h", "**/*.h"
+            include "*.c", "**/*.c"
+            into "$buildDir/dist/src"
+            includeEmptyDirs = false
+        }
 
-    exec {
-      if (DefaultNativePlatform.currentOperatingSystem.isWindows())
-        commandLine 'cmd', '/c', "C:\\msys64\\usr\\bin\\rsync -crh --delete --checksum --exclude '/cmake-build-*' --exclude '/build-*' --exclude '/build' --exclude '/data' --exclude '/sdmc' --exclude '/.idea' dist/ ${rootProject.name}"
-      else
-        commandLine 'bash', '-c', "rsync -crh --delete --checksum --exclude '/cmake-build-*' --exclude '/build-*' --exclude '/build' --exclude '/data' --exclude '/sdmc' --exclude '/.idea' dist/ ${rootProject.name}"
-      workingDir "$buildDir"
+        copy {
+            from(configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }) {
+                exclude "**/*.class"
+                exclude "META-INF", "META-INF/**"
+                exclude "**/*.gwt.xml"
+                exclude "**.cpp", "**/*.cpp"
+                exclude "**.hpp", "**/*.hpp"
+                exclude "**.h", "**/*.h"
+                exclude "**.c", "**/*.c"
+                exclude "switchgdx/**"
+            }
+            into "$buildDir/dist/romfs/classpath"
+            includeEmptyDirs = false
+        }
+
+        copy {
+            from "$rootDir/assets"
+            into "$buildDir/dist/romfs"
+        }
+
+        copy {
+            from "$rootDir/build/modules"
+            into "$buildDir/dist/romfs"
+        }
+
+        copy {
+            from "$projectDir/icon.jpg"
+            into "$buildDir/dist"
+        }
+
+        copy {
+            from({ zipTree("$configurations.switchgdx.singleFile.absolutePath") }) {
+                include "switchgdx/project/**"
+                eachFile { fcd ->
+                    fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(2))
+                }
+            }
+            into "$buildDir/dist"
+        }
+        delete "$buildDir/dist/switchgdx"
+
+        copy {
+            from(fileTree("res"))
+            into "$buildDir/dist"
+        }
+
+        exec {
+            if (DefaultNativePlatform.currentOperatingSystem.isWindows())
+                commandLine 'cmd', '/c', "C:\\msys64\\usr\\bin\\rsync -crh --delete --checksum --exclude '/cmake-build-*' --exclude '/build-*' --exclude '/build' --exclude '/data' --exclude '/sdmc' --exclude '/.idea' dist/ ${rootProject.name}"
+            else
+                commandLine 'bash', '-c', "rsync -crh --delete --checksum --exclude '/cmake-build-*' --exclude '/build-*' --exclude '/build' --exclude '/data' --exclude '/sdmc' --exclude '/.idea' dist/ ${rootProject.name}"
+            workingDir "$buildDir"
+        }
     }
-  }
 }
 configure(transpile) {
   group "SwitchGDX"

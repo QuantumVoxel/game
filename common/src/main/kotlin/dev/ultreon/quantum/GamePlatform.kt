@@ -1,6 +1,10 @@
 package dev.ultreon.quantum
 
+import dev.ultreon.quantum.async.AsyncExecutor
+import dev.ultreon.quantum.async.Future
+import dev.ultreon.quantum.network.BaseSocket
 import dev.ultreon.quantum.resource.ResourceManager
+import kotlin.system.exitProcess
 
 /**
  * Represents the platform that the game is running on.
@@ -8,6 +12,17 @@ import dev.ultreon.quantum.resource.ResourceManager
  * @since 0.0.0
  */
 interface GamePlatform {
+  val isDesktop: Boolean get() = false
+  val isMac: Boolean get() = false
+
+  val isWindows: Boolean get() = false
+
+  val isLinux: Boolean get() = false
+
+  val isAndroid: Boolean get() = false
+
+  val isIos: Boolean get() = false
+
   /**
    * Returns `true` if the game is running on the client, `false` if the game is running on the server.
    *
@@ -118,6 +133,10 @@ interface GamePlatform {
 
   }
 
+  fun createClientSocket(asString: String): BaseSocket? {
+    return null
+  }
+
   /**
    * Returns `true` if the game is running on WebGL 3.0.
    */
@@ -156,6 +175,14 @@ interface GamePlatform {
    * @since 0.0.2
    */
   val isWeb: Boolean get() = isWebGL3 || isWebGL2
+
+  fun halt(i: Int)
+  fun cpuCores(): Int
+  fun yield()
+
+  fun createAsyncExecutor(maxConcurrent: Int, name: String = "AsyncExecutor-Thread"): AsyncExecutor
+  fun sleep(i: Int)
+  fun <T> createFuture(): Future<T>
 }
 
 /**

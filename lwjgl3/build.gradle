@@ -1,22 +1,22 @@
 buildscript {
-  repositories {
-    gradlePluginPortal()
-  }
-  dependencies {
-    classpath "io.github.fourlastor:construo:1.5.1"
-    if (enableGraalNative == 'true') {
-      classpath "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.10.4"
+    repositories {
+        gradlePluginPortal()
     }
-  }
+    dependencies {
+        classpath "io.github.fourlastor:construo:1.5.1"
+        if (enableGraalNative == 'true') {
+            classpath "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.10.4"
+        }
+    }
 }
 plugins {
-  id "application"
+    id "application"
 }
 apply plugin: 'io.github.fourlastor.construo'
 apply plugin: 'org.jetbrains.kotlin.jvm'
 
 if (enableGraalNative) {
-  apply plugin: "org.graalvm.buildtools.native"
+    apply plugin: "org.graalvm.buildtools.native"
 }
 
 import io.github.fourlastor.construo.Target
@@ -29,155 +29,184 @@ eclipse.project.name = appName + '-lwjgl3'
 java.sourceCompatibility = 17
 java.targetCompatibility = 17
 if (JavaVersion.current().isJava9Compatible()) {
-  compileJava.options.release.set(17)
+    compileJava.options.release.set(17)
 }
 kotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
 compileKotlin.kotlinOptions.jvmTarget = "17"
 
 dependencies {
-  implementation "com.badlogicgames.gdx-controllers:gdx-controllers-desktop:$gdxControllersVersion"
-  implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
-  implementation "com.badlogicgames.gdx:gdx-lwjgl3-angle:$gdxVersion"
-  implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
-  implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
-  implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
-  implementation "org.lwjgl:lwjgl-opengles:3.3.3:natives-windows"
-  implementation "com.github.Dgzt:gdx-lwjgl3-angle-vulkan:1.2.0", {
-    exclude group: "org.lwjgl", module: "lwjgl"
-    exclude group: "org.lwjgl", module: "lwjgl-opengles"
-    exclude group: "org.lwjgl", module: "lwjgl-egl"
-  }
-  implementation "dev.ultreon:gdx-lwjgl3-metal-angle:6af9274bb1", {
-    exclude group: "org.lwjgl", module: "lwjgl"
-    exclude group: "org.lwjgl", module: "lwjgl-opengles"
-    exclude group: "org.lwjgl", module: "lwjgl-egl"
-  }
-  implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
-  implementation "de.tomgrill.gdxdialogs:gdx-dialogs-desktop:$dialogsVersion"
-  implementation project(':client')
+    implementation "com.badlogicgames.gdx-controllers:gdx-controllers-desktop:$gdxControllersVersion"
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-lwjgl3-angle:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    implementation "org.lwjgl:lwjgl-opengles:3.3.3:natives-windows"
+    implementation "com.github.Dgzt:gdx-lwjgl3-angle-vulkan:1.2.0", {
+        exclude group: "org.lwjgl", module: "lwjgl"
+        exclude group: "org.lwjgl", module: "lwjgl-opengles"
+        exclude group: "org.lwjgl", module: "lwjgl-egl"
+    }
+    implementation "dev.ultreon:gdx-lwjgl3-metal-angle:6af9274bb1", {
+        exclude group: "org.lwjgl", module: "lwjgl"
+        exclude group: "org.lwjgl", module: "lwjgl-opengles"
+        exclude group: "org.lwjgl", module: "lwjgl-egl"
+    }
+    implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+    implementation "de.tomgrill.gdxdialogs:gdx-dialogs-desktop:$dialogsVersion"
+    implementation project(':client')
 
-  implementation 'com.caoccao.javet:javet:4.1.1'
-  implementation 'com.caoccao.javet:javet-node-linux-arm64:4.1.1'
-  implementation 'com.caoccao.javet:javet-node-linux-x86_64:4.1.1'
-  implementation 'com.caoccao.javet:javet-node-macos-arm64:4.1.1'
-  implementation 'com.caoccao.javet:javet-node-macos-x86_64:4.1.1'
-  implementation 'com.caoccao.javet:javet-node-windows-x86_64:4.1.1'
-  implementation 'com.caoccao.javet:javenode:0.8.0'
+    implementation 'com.caoccao.javet:javet:4.1.1'
+    implementation 'com.caoccao.javet:javet-node-linux-arm64:4.1.1'
+    implementation 'com.caoccao.javet:javet-node-linux-x86_64:4.1.1'
+    implementation 'com.caoccao.javet:javet-node-macos-arm64:4.1.1'
+    implementation 'com.caoccao.javet:javet-node-macos-x86_64:4.1.1'
+    implementation 'com.caoccao.javet:javet-node-windows-x86_64:4.1.1'
+    implementation 'com.caoccao.javet:javenode:0.8.0'
 
-  // JNA
-  implementation "net.java.dev.jna:jna:5.15.0"
-  implementation "net.java.dev.jna:jna-platform:5.15.0"
+    // JNA
+    implementation "net.java.dev.jna:jna:5.15.0"
+    implementation "net.java.dev.jna:jna-platform:5.15.0"
 
-  // Commons Compress
-  implementation "org.apache.commons:commons-compress:1.27.1"
+    // Commons Compress
+    implementation "org.apache.commons:commons-compress:1.27.1"
 
-  // Guava
-  implementation "com.google.guava:guava:33.4.0-jre"
+    // Guava
+    implementation "com.google.guava:guava:33.4.0-jre"
 
-  // JOptSimple
-  implementation "net.sf.jopt-simple:jopt-simple:5.0.4"
+    // JOptSimple
+    implementation "net.sf.jopt-simple:jopt-simple:5.0.4"
 
-  if (enableGraalNative == 'true') {
-    implementation "io.github.berstanio:gdx-svmhelper-backend-lwjgl3:$graalHelperVersion"
-  }
+    if (enableGraalNative == 'true') {
+        implementation "io.github.berstanio:gdx-svmhelper-backend-lwjgl3:$graalHelperVersion"
+    }
 
+    api 'io.socket:socket.io-client:2.1.1'
+    api 'io.socket:socket.io-server:4.1.2'
+    api("jakarta.servlet:jakarta.servlet-api:6.1.0")
 }
 
 def os = System.properties['os.name'].toLowerCase()
 
 run {
-  mkdir(rootProject.file('run'))
+    mkdir(rootProject.file('run'))
 
-  workingDir = rootProject.file('run').path
-  setIgnoreExitValue(false)
+    workingDir = rootProject.file('run').path
+    setIgnoreExitValue(false)
 
 //  jvmArgs += "-agentlib:native-image-agent=config-output-dir=./config."
 
-  if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
+    if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
 }
 
 jar {
 // sets the name of the .jar file this produces to the name of the game or app, with the version after.
-  archiveFileName.set("${appName}-${projectVersion}.jar")
+    archiveFileName.set("${appName}-${projectVersion}.jar")
 // the duplicatesStrategy matters starting in Gradle 7.0; this setting works.
-  duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
-  dependsOn configurations.runtimeClasspath
-  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 // these "exclude" lines remove some unnecessary duplicate files in the output JAR.
-  exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-  dependencies {
-    exclude('META-INF/INDEX.LIST', 'META-INF/maven/**')
-  }
+    exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+    dependencies {
+        exclude('META-INF/INDEX.LIST', 'META-INF/maven/**')
+    }
 // setting the manifest makes the JAR runnable.
-  manifest {
-    attributes 'Main-Class': project.mainClassName
-  }
+    manifest {
+        attributes 'Main-Class': project.mainClassName
+    }
 // this last step may help on some OSes that need extra instruction to make runnable JARs.
-  doLast {
-    file(archiveFile).setExecutable(true, false)
-  }
+    doLast {
+        file(archiveFile).setExecutable(true, false)
+    }
 }
 
 construo {
-  // name of the executable
-  name.set(appName)
-  // human-readable name, used for example in the `.app` name for macOS
-  humanName.set(appName)
-  // Optional, defaults to project version property
-  version.set("$projectVersion")
+    // name of the executable
+    name.set(appName)
+    // human-readable name, used for example in the `.app` name for macOS
+    humanName.set(appName)
+    // Optional, defaults to project version property
+    version.set("$projectVersion")
 
-  targets.configure {
-    create("linuxX64", Target.Linux) {
-      architecture.set(Target.Architecture.X86_64)
-      jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_linux_hotspot_17.0.12_7.tar.gz")
+    targets.configure {
+        create("linuxX64", Target.Linux) {
+            architecture.set(Target.Architecture.X86_64)
+            jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_linux_hotspot_17.0.12_7.tar.gz")
+        }
+        create("macM1", Target.MacOs) {
+            architecture.set(Target.Architecture.AARCH64)
+            jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.12_7.tar.gz")
+            // macOS needs an identifier
+            identifier.set("dev.ultreon.quantum." + appName)
+            // Optional: icon for macOS
+            macIcon.set(project.file("icons/logo.icns"))
+        }
+        create("macX64", Target.MacOs) {
+            architecture.set(Target.Architecture.X86_64)
+            jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_mac_hotspot_17.0.12_7.tar.gz")
+            // macOS needs an identifier
+            identifier.set("dev.ultreon.quantum." + appName)
+            // Optional: icon for macOS
+            macIcon.set(project.file("icons/logo.icns"))
+        }
+        create("winX64", Target.Windows) {
+            architecture.set(Target.Architecture.X86_64)
+            jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_windows_hotspot_17.0.12_7.zip")
+            // Uncomment the next line to show a console when the game runs, to print messages.
+            //useConsole.set(true)
+        }
     }
-    create("macM1", Target.MacOs) {
-      architecture.set(Target.Architecture.AARCH64)
-      jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.12_7.tar.gz")
-      // macOS needs an identifier
-      identifier.set("dev.ultreon.quantum." + appName)
-      // Optional: icon for macOS
-      macIcon.set(project.file("icons/logo.icns"))
-    }
-    create("macX64", Target.MacOs) {
-      architecture.set(Target.Architecture.X86_64)
-      jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_mac_hotspot_17.0.12_7.tar.gz")
-      // macOS needs an identifier
-      identifier.set("dev.ultreon.quantum." + appName)
-      // Optional: icon for macOS
-      macIcon.set(project.file("icons/logo.icns"))
-    }
-    create("winX64", Target.Windows) {
-      architecture.set(Target.Architecture.X86_64)
-      jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_windows_hotspot_17.0.12_7.zip")
-      // Uncomment the next line to show a console when the game runs, to print messages.
-      //useConsole.set(true)
-    }
-  }
 }
 
 // Equivalent to the jar task; here for compatibility with gdx-setup.
 tasks.register('dist') {
-  dependsOn 'jar'
+    dependsOn 'jar'
 }
 
-distributions {
-  main {
-    contents {
-      into('libs') {
-        project.configurations.runtimeClasspath.files.findAll { file ->
-          file.getName() != project.tasks.jar.outputs.files.singleFile.name
-        }.each { file ->
-          exclude file.name
+tasks.register('setup') {
+    dependsOn 'jar'
+
+    doLast {
+        file('build/setup').mkdirs()
+
+        copy {
+            from configurations.runtimeClasspath
+            into 'build/setup/lib'
         }
-      }
+
+        copy {
+            from jar.outputs.files
+            into 'build/setup/lib'
+        }
+
+        file('build/setup/start.sh').text = """
+            #!/bin/sh
+            java -cp lib/* dev.ultreon.quantum.lwjgl3.Lwjgl3Launcher
+        """
+
+        file('build/setup/start.bat').text = """
+            @echo off
+            java -cp lib/* dev.ultreon.quantum.lwjgl3.Lwjgl3Launcher
+        """
     }
-  }
 }
+
+tasks.register('distrib', Zip) {
+    dependsOn 'setup'
+
+    from 'build/setup'
+    archiveFileName.set("launcher-package.zip")
+}
+
+tasks.build.dependsOn(distrib)
+
+distTar.enabled = false
+distZip.enabled = false
+
+startScripts.enabled = false
 
 startScripts.dependsOn(':lwjgl3:jar')
 startScripts.classpath = project.tasks.jar.outputs.files
 
 if (enableGraalNative == 'true') {
-  apply from: file("nativeimage.gradle")
+    apply from: file("nativeimage.gradle")
 }

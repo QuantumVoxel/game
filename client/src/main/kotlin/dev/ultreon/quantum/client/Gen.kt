@@ -289,7 +289,7 @@ package dev.ultreon.quantum.client//package dev.ultreon.quantum.client
 //      "io.github.ultreon.xeox" to "xeox",
 //      "io.github.ultreon.corelibs" to "corelibs",
 //      "io.github.ultreon.libs" to "libs",
-//      "io.github.xypercode.mods" to "xyper_mods",
+//      "io.github.Qubilux.mods" to "xyper_mods",
 //      "io.github.ultreon.quantumjs" to "quantumjs._old",
 //      "dev.ultreon.gameprovider" to "quantumjs._gameprovider",
 //      "de.articdive.jnoise" to "noisejs",

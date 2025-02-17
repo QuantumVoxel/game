@@ -1,0 +1,26 @@
+package dev.ultreon.quantum.server
+
+import dev.ultreon.quantum.async.AsyncExecutor
+import dev.ultreon.quantum.async.Future
+
+class HeadlessAsyncExecutor(maxConcurrent: Int, name: String) : AsyncExecutor() {
+  private val gdx = com.badlogic.gdx.utils.async.AsyncExecutor(maxConcurrent, name)
+
+  override fun <T> submit(task: () -> T): Future<T> {
+    val future = HeadlessFuture<T>()
+
+    gdx.submit {
+      try {
+        future.complete(task())
+      } catch (e: Throwable) {
+        future.completeExceptionally(e)
+      }
+    }
+
+    return future
+  }
+
+  override fun dispose() {
+    gdx.dispose()
+  }
+}

@@ -48,6 +48,13 @@ object UiAction {
         }
       }
 
+      "connect-server" -> {
+        return {
+          logger.info("Connecting to server: ${json["server"].asString()}")
+          quantum.connect(json["server"].asString())
+        }
+      }
+
       "close-screen" -> {
         return {
           quantum.showScreen(if (quantum.dimension != null) {

@@ -7,4 +7,8 @@ import dev.ultreon.quantum.network.Player
 class ServerPlayer(override val entity: Entity?,
                    override val name: String,
                    override val connection: Connection
-) : Player()
+) : Player() {
+  override fun messageReceived(message: String) {
+    TODO("Not yet implemented")
+  }
+}

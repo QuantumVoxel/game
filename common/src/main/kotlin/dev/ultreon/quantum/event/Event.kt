@@ -58,12 +58,12 @@ class Event(val name: String, vararg val contextParams: ContextParam<*>) {
     }
   }
 
-  suspend fun callAsync(vararg mapArgs: Pair<String, ContextValue<*>>) {
+  fun callAsync(vararg mapArgs: Pair<String, ContextValue<*>>) {
     var start = System.currentTimeMillis()
     for (listener in listeners) {
       listener.call(CallContext(listener.contextJson).also {
         it.paramValues.putAll(mapArgs)
-      })
+      }).get()
 
       if ((System.currentTimeMillis() - start) > 50) {
         start = System.currentTimeMillis()
@@ -72,9 +72,7 @@ class Event(val name: String, vararg val contextParams: ContextParam<*>) {
   }
 
   fun callSync(vararg mapArgs: Pair<String, ContextValue<*>>) {
-    runBlocking {
-      callAsync(*mapArgs)
-    }
+    callAsync(*mapArgs)
   }
 }
 

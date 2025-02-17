@@ -9,10 +9,13 @@ import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
 import com.badlogic.gdx.backends.android.surfaceview.ResolutionStrategy
 import dev.ultreon.quantum.BuildConfig
 import dev.ultreon.quantum.GamePlatform
+import dev.ultreon.quantum.async.AsyncExecutor
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.client.QuantumVoxel
 import dev.ultreon.quantum.client.gameInput
 import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.resource.ResourceManager
+import kotlin.system.exitProcess
 
 
 /** Launches the Android application. */
@@ -30,6 +33,33 @@ class AndroidLauncher : AndroidApplication() {
 
       override val isDebug: Boolean
         get() = BuildConfig.DEBUG
+
+      override fun cpuCores(): Int {
+        return Runtime.getRuntime().availableProcessors()
+      }
+
+      override val isAndroid: Boolean
+        get() = true
+
+      override fun yield() {
+        Thread.yield()
+      }
+
+      override fun createAsyncExecutor(maxConcurrent: Int, name: String): AsyncExecutor {
+        return AndroidAsyncExecutor(maxConcurrent, name)
+      }
+
+      override fun sleep(i: Int) {
+        Thread.sleep(i.toLong())
+      }
+
+      override fun <T> createFuture(): Future<T> {
+        return AndroidFuture()
+      }
+
+      override fun halt(i: Int) {
+        exitProcess(i)
+      }
 
       override val isGLES3: Boolean
         get() = Gdx.gl30 != null

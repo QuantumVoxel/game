@@ -58,7 +58,7 @@ class TextureManager(val resourceManager: ResourceManager) : Disposable {
       pixmap.setColor(1f, 0.5f, 0.0f, 1f)
       pixmap.drawPixel(0, 0)
       pixmap.drawPixel(1, 1)
-      QuantumVoxel.invoke {
+      QuantumVoxel {
         Texture(pixmap).also { _ ->
           pixmap.disposeSafely()
         }
@@ -106,7 +106,7 @@ class TextureManager(val resourceManager: ResourceManager) : Disposable {
         return
       }
 
-      QuantumVoxel.invoke {
+      QuantumVoxel {
         val generateTextureAtlas =
           packer.generateTextureAtlas(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest, false)
 

@@ -28,6 +28,7 @@ import dev.ultreon.quantum.entity.PositionComponent
 import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.math.Vector3D
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.util.BlockHit
 import dev.ultreon.quantum.util.NamespaceID
 import dev.ultreon.quantum.util.id
@@ -39,6 +40,31 @@ import ktx.async.KtxAsync
 import ktx.math.vec3
 
 private val tmp1 = vec3()
+
+fun modelBatch() = ModelBatch(
+  if (gamePlatform.isWebGL3 || gamePlatform.isGL30 || gamePlatform.isGLES3) {
+    object : DefaultShaderProvider(
+      (quantum.clientResources require NamespaceID.of(path = "shaders/programs/default.vsh")).text,
+      (quantum.clientResources require NamespaceID.of(path = "shaders/programs/default.fsh")).text
+    ) {
+      override fun createShader(renderable: Renderable): Shader {
+        return DefaultShader(
+          renderable,
+          this.config,
+          "#version 300 es\n\n" + DefaultShader.createPrefix(renderable, config)
+        )
+      }
+    }
+  } else {
+    object : DefaultShaderProvider(
+      (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/default.vsh")).text,
+      (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/default.fsh")).text
+    ) {
+
+    }
+  },
+  DefaultRenderableSorter()
+)
 
 /**
  * Represents the main game screen responsible for rendering and managing the player's interaction
@@ -63,32 +89,13 @@ class EnvironmentRenderer : Disposable {
   internal var lastRefreshPosition: Vector3D = vec3d()
   private var lastRefreshTime: Long = 0
   private var lastPollTime: Long = 0
+
   private val speed: Float = 6f
 
   private val hud by screen(path = "hud")
 
-  private val modelBatch = ModelBatch(
-    if (gamePlatform.isWebGL3 || gamePlatform.isGL30 || gamePlatform.isGLES3) {
-      object : DefaultShaderProvider(
-        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/default.vsh")).text,
-        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/default.fsh")).text
-      ) {
-        override fun createShader(renderable: Renderable): Shader {
-          return DefaultShader(
-            renderable,
-            this.config,
-            "#version 300 es\n\n" + DefaultShader.createPrefix(renderable, config)
-          )
-        }
-      }
-    } else {
-      DefaultShaderProvider(
-        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/default.vsh")).text,
-        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/default.fsh")).text
-      )
-    },
-    DefaultRenderableSorter()
-  )
+  private val modelBatch = modelBatch()
+
   private val font = quantum.font
   private val spriteBatch = spriteBatch()
   val camera = perspectiveCamera {
@@ -117,7 +124,9 @@ class EnvironmentRenderer : Disposable {
   val skybox = Skybox()
 
   init {
-    KtxAsync.launch { dimension!!.refreshChunks(player!!.positionComponent.position) }
+    Future.runAsync { dimension!!.refreshChunks(player!!.positionComponent.position) }.apply {
+      onFailure = { logger.error("Failed to refresh chunks", it.stackTraceToString()) }
+    }
   }
 
   /**
@@ -162,7 +171,7 @@ class EnvironmentRenderer : Disposable {
 
     move(position, delta)
 
-    KtxAsync.launch {
+    Future.runAsync {
       if (!refreshing && lastRefreshTime + 1000 < System.currentTimeMillis()) {
         if (position.position != lastRefreshPosition) {
           this@EnvironmentRenderer.refreshing = true
@@ -300,7 +309,7 @@ class EnvironmentRenderer : Disposable {
       KeyBinds.runningKey.isPressed()
 
     if (Gdx.input.isKeyJustPressed(Input.Keys.F1)) {
-      KtxAsync.launch {
+      Future.runAsync {
         dimension!!.rebuildAll()
       }
     }

@@ -3,6 +3,7 @@
 package dev.ultreon.quantum.scripting.qfunc
 
 import com.badlogic.gdx.utils.JsonValue
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.scripting.ContextAware
 import dev.ultreon.quantum.scripting.ContextType
@@ -10,8 +11,6 @@ import dev.ultreon.quantum.scripting.ContextValue
 import dev.ultreon.quantum.scripting.CoreUtils
 import dev.ultreon.quantum.scripting.function.CallContext
 import dev.ultreon.quantum.scripting.function.VirtualFunction
-import kotlinx.coroutines.*
-import ktx.async.MainDispatcher
 import org.intellij.lang.annotations.Language
 import java.util.*
 import kotlin.coroutines.CoroutineContext
@@ -58,10 +57,9 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
 
     this@QFuncInterpreter.inputParameters =
       callContext.paramValues + ("core" to ContextValue(ContextType.core, CoreUtils))
-    this@QFuncInterpreter.context = MainDispatcher
 
     try {
-      return runBlocking { visit(parser.file ?: return@runBlocking null) as? ContextValue<*> }
+      return visit(parser.file ?: return null) as? ContextValue<*>
     } catch (e: QFuncSyntaxError) {
       logger.error(e.toString())
     } catch (e: QFuncParserException) {
@@ -73,36 +71,42 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     return null
   }
 
-  suspend fun interpretAsync(
+  fun interpretAsync(
     code: String,
     callContext: CallContext,
     filename: String = "<dynamic>"
-  ): ContextValue<*>? {
-    try {
-      val lexer = QFuncLexer(code, filename)
-      val parser = QFuncParser(lexer)
-      parser.parse()
-      return exec(callContext, parser)
-    } catch (e: QFuncSyntaxError) {
-      logger.error(e.toString())
-      return null
-    } catch (e: QFuncParserException) {
-      logger.error("Error parsing: " + e.message)
-      return null
-    } catch (e: Exception) {
-      logger.error(e.toString() + "\n" + e.stackTraceToString())
-      return null
+  ): Future<ContextValue<*>?> {
+    val future = Future<ContextValue<*>?>()
+
+    Thread {
+      try {
+        val lexer = QFuncLexer(code, filename)
+        val parser = QFuncParser(lexer)
+        parser.parse()
+        future.complete(exec(callContext, parser))
+      } catch (e: QFuncSyntaxError) {
+        logger.error(e.toString())
+        future.complete(null)
+      } catch (e: QFuncParserException) {
+        logger.error("Error parsing: " + e.message)
+        future.complete(null)
+      } catch (e: Exception) {
+        logger.error(e.toString() + "\n" + e.stackTraceToString())
+        future.complete(null)
+      }
+    }.apply {
+      start()
     }
 
+    return future
   }
 
-  private suspend fun QFuncInterpreter.exec(
+  private fun QFuncInterpreter.exec(
     callContext: CallContext,
     parser: QFuncParser
   ): ContextValue<*>? {
-    this@QFuncInterpreter.inputParameters =
+    this.inputParameters =
       callContext.paramValues + ("core" to ContextValue(ContextType.core, CoreUtils))
-    this@QFuncInterpreter.context = MainDispatcher
 
     try {
       return visit(parser.file ?: return null) as? ContextValue<*>
@@ -124,7 +128,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     }
   }
 
-  private suspend fun visit(tree: AST): Any? {
+  private fun visit(tree: AST): Any? {
     return when (tree) {
       is BlockAST -> {
         visitBlock(tree)
@@ -224,7 +228,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     }
   }
 
-  private suspend fun visitUnaryOp(tree: UnaryOpAST): Any? {
+  private fun visitUnaryOp(tree: UnaryOpAST): Any? {
     val value = (visit(tree.expression) as? ContextValue<*> ?: run {
       logger.error("Value not present at ${tree.filename}:${tree.line}:${tree.column}")
       return null
@@ -305,7 +309,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     }
   }
 
-  private suspend fun visitBinaryOps(tree: BinaryOpsAST): Any? {
+  private fun visitBinaryOps(tree: BinaryOpsAST): Any? {
     val left = visit(tree.left)
     val right = visit(tree.right)
     if (left is ContextValue<*> && right is ContextValue<*>) {
@@ -359,34 +363,34 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     throw AssertionError("Unreachable code")
   }
 
-  private suspend fun visitExpressionStatement(tree: ExpressionStatementAST): Any? {
+  private fun visitExpressionStatement(tree: ExpressionStatementAST): Any? {
     visit(tree.expression)
     return null
   }
 
-  private suspend fun visitFile(tree: FileAST): Any? {
+  private fun visitFile(tree: FileAST): Any? {
     for (statement in tree.statements) {
       visit(statement)
     }
     return null
   }
 
-  private suspend fun visitPresent(tree: PresentAST): Any? {
+  private fun visitPresent(tree: PresentAST): Any? {
     return ContextValue(ContextType.boolean, visit(tree.expression) != null)
   }
 
-  private suspend fun visitBlock(tree: BlockAST): Any? {
+  private fun visitBlock(tree: BlockAST): Any? {
     for (statement in tree.statements) {
       visit(statement)
     }
     return null
   }
 
-  private suspend fun visitString(tree: StringAST): Any? {
+  private fun visitString(tree: StringAST): Any? {
     return ContextValue(ContextType.string, tree.value)
   }
 
-  private suspend fun visitNumber(tree: NumberAST): Any? {
+  private fun visitNumber(tree: NumberAST): Any? {
     return when (tree.value) {
       is Int -> ContextValue(ContextType.int, tree.value)
       is Long -> ContextValue(ContextType.long, tree.value)
@@ -401,11 +405,11 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     }
   }
 
-  private suspend fun visitBoolean(tree: BooleanAST): Any? {
+  private fun visitBoolean(tree: BooleanAST): Any? {
     return ContextValue(ContextType.boolean, tree.value)
   }
 
-  private suspend fun visitGlobal(tree: GlobalAST): Any? {
+  private fun visitGlobal(tree: GlobalAST): Any? {
     var value: ContextValue<*>? = if (tree.name in persistentGlobals) {
       persistObject?.persistentData?.get(tree.name) ?: return null
     } else {
@@ -429,7 +433,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
         val actualValue = value.value
         try {
           if (actualValue is VirtualFunction) {
-            return actualValue.call(callContext)
+            return actualValue.call(callContext).get()
           } else {
             throw QFuncInterpreterException("Not a function", tree.filename, tree.line, tree.column)
           }
@@ -442,7 +446,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     return value
   }
 
-  private suspend fun visitInputParam(tree: InputParamAST): Any? {
+  private fun visitInputParam(tree: InputParamAST): Any? {
     return inputParameters[tree.name]?.let {
       var returnValue: ContextValue<*>? = it
       for (member in tree.members) {
@@ -465,7 +469,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
           val actualValue = returnValue.value
           try {
             if (actualValue is VirtualFunction) {
-              return actualValue.call(callContext)
+              return actualValue.call(callContext).get()
             } else {
               throw QFuncInterpreterException("Not a function", tree.filename, tree.line, tree.column)
             }
@@ -484,11 +488,11 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     }
   }
 
-  private suspend fun visitMember(tree: MemberAST): Any? {
+  private fun visitMember(tree: MemberAST): Any? {
     throw Exception("Not supported")
   }
 
-  private suspend fun visitAssignment(tree: AssignmentAST): Any? {
+  private fun visitAssignment(tree: AssignmentAST): Any? {
     val value = visit(tree.expression)
     val contextValue = value as? ContextValue<*> ?: run {
       logger.error("Value not present at ${tree.filename}:${tree.line}:${tree.column}")
@@ -504,7 +508,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     return value
   }
 
-  private suspend fun visitFunctionCall(tree: FunctionCallAST): Any? {
+  private fun visitFunctionCall(tree: FunctionCallAST): Any? {
     val callContext = CallContext(JsonValue(JsonValue.ValueType.nullValue))
     for (argument in tree.arguments) {
       callContext.paramValues[argument.parameterName] = visit(argument.expression) as? ContextValue<*> ?: run {
@@ -516,15 +520,15 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     return callContext
   }
 
-  private suspend fun visitId(tree: IdAST): Any? {
+  private fun visitId(tree: IdAST): Any? {
     return ContextValue(ContextType.id, tree.id)
   }
 
-  private suspend fun visitTagId(tree: TagIdAST): Any? {
+  private fun visitTagId(tree: TagIdAST): Any? {
     return ContextValue(ContextType.id, tree.id) // TODO
   }
 
-  private suspend fun visitDirective(tree: DirectiveAST): Any? {
+  private fun visitDirective(tree: DirectiveAST): Any? {
     val values = tree.values
     return when (tree.name) {
       "input" -> {
@@ -560,7 +564,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     }
   }
 
-  private suspend fun visitIf(tree: IfAST): Any? {
+  private fun visitIf(tree: IfAST): Any? {
     val condRaw = visit(tree.condition)
     val conditionValue = condRaw as? ContextValue<*> ?: run {
       throw QFuncInterpreterException("Value not present", tree.filename, tree.line, tree.column)
@@ -580,7 +584,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     }
   }
 
-  private suspend fun visitWhile(tree: WhileAST): Any? {
+  private fun visitWhile(tree: WhileAST): Any? {
     while (true) {
       val conditionValue = visit(tree.condition) as? ContextValue<*> ?: run {
         logger.error("Value not present at ${tree.filename}:${tree.line}:${tree.column}")
@@ -602,7 +606,7 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     return null
   }
 
-  private suspend fun visitFor(tree: ForAST): Any? {
+  private fun visitFor(tree: ForAST): Any? {
     val iterableValue = visit(tree.iterable) as? ContextValue<*> ?: run {
       logger.error("Value not present at ${tree.filename}:${tree.line}:${tree.column}")
       return null
@@ -622,21 +626,21 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     return null
   }
 
-  private suspend fun visitBreak(tree: BreakAST): Any? {
+  private fun visitBreak(tree: BreakAST): Any? {
     throw Break
   }
 
-  private suspend fun visitContinue(tree: ContinueAST): Any? {
+  private fun visitContinue(tree: ContinueAST): Any? {
     throw Continue
   }
 
-  private suspend fun visitReturn(tree: ReturnAST): Any? {
+  private fun visitReturn(tree: ReturnAST): Any? {
     throw Return(visit(tree.expression ?: throw Return(null)) as? ContextValue<*> ?: run {
       throw QFuncInterpreterException("Value not present", tree.filename, tree.line, tree.column)
     })
   }
 
-  private suspend fun visitStop(tree: StopAST): Any? {
+  private fun visitStop(tree: StopAST): Any? {
     throw Stop
   }
 
@@ -653,15 +657,15 @@ class QFuncInterpreter(private var inputParameters: Map<String, ContextValue<*>?
     private fun readResolve(): Any = Stop
   }
 
-  private suspend fun visitDirectiveType(tree: DirectiveTypeAST): Any? {
+  private fun visitDirectiveType(tree: DirectiveTypeAST): Any? {
     throw Exception("Not supported")
   }
 
-  private suspend fun visitDirectiveValue(tree: DirectiveValueAST): Any? {
+  private fun visitDirectiveValue(tree: DirectiveValueAST): Any? {
     throw Exception("Not supported")
   }
 
-  private suspend fun visitArgument(tree: ArgumentAST): Any? {
+  private fun visitArgument(tree: ArgumentAST): Any? {
     return tree.parameterName to visit(tree.expression)
   }
 }

@@ -6,6 +6,8 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.iosrobovm.IOSApplication
 import com.badlogic.gdx.backends.iosrobovm.IOSApplicationConfiguration
 import dev.ultreon.quantum.GamePlatform
+import dev.ultreon.quantum.async.AsyncExecutor
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.client.QuantumVoxel
 import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.resource.ResourceManager
@@ -32,6 +34,30 @@ class IOSLauncher : IOSApplication.Delegate() {
 
       override val isDebug: Boolean
         get() = NSBundle.getMainBundle().getInfoDictionaryObject("CFBundleDevelopmentRegion") != null
+
+      override fun cpuCores(): Int {
+        return Runtime.getRuntime().availableProcessors()
+      }
+
+      override fun yield() {
+        Thread.yield()
+      }
+
+      override fun createAsyncExecutor(maxConcurrent: Int, name: String): AsyncExecutor {
+        return IOSAsyncExecutor(maxConcurrent, name)
+      }
+
+      override fun sleep(i: Int) {
+        Thread.sleep(i.toLong())
+      }
+
+      override fun <T> createFuture(): Future<T> {
+        return IOSFuture<T>()
+      }
+
+      override fun halt(i: Int) {
+        Runtime.getRuntime().exit(i)
+      }
     }
 
     return IOSApplication(QuantumVoxel(), IOSApplicationConfiguration().apply
