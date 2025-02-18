@@ -59,7 +59,7 @@ dependencies {
 }
 
 jar {
-    archiveBaseName.set(appName)
+    archiveBaseName.set("quantum-common")
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
     dependsOn configurations.runtimeClasspath
     doLast {
