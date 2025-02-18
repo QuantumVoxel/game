@@ -101,7 +101,7 @@ run {
 
 jar {
 // sets the name of the .jar file this produces to the name of the game or app, with the version after.
-    archiveFileName.set("${appName}-${projectVersion}.jar")
+    archiveFileName.set("quantum-lwjgl3-${projectVersion}.jar")
 // the duplicatesStrategy matters starting in Gradle 7.0; this setting works.
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 // these "exclude" lines remove some unnecessary duplicate files in the output JAR.
@@ -170,6 +170,26 @@ tasks.register('setup') {
 
         copy {
             from configurations.runtimeClasspath
+            into 'build/setup/lib'
+        }
+
+        copy {
+            from project(':client').configurations.runtimeClasspath
+            into 'build/setup/lib'
+        }
+
+        copy {
+            from project(':common').configurations.runtimeClasspath
+            into 'build/setup/lib'
+        }
+
+        copy {
+            from project(':client').tasks.jar.outputs.files
+            into 'build/setup/lib'
+        }
+
+        copy {
+            from project(':common').tasks.jar.outputs.files
             into 'build/setup/lib'
         }
 
