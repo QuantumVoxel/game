@@ -1,6 +1,8 @@
 package dev.ultreon.quantum.async
 
+import com.badlogic.gdx.utils.Disposable
 import dev.ultreon.quantum.gamePlatform
+import ktx.assets.disposeSafely
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -113,7 +115,7 @@ abstract class Future<T> protected constructor() {
     }
   }
 
-  companion object {
+  companion object : Disposable {
     @Suppress("GDXKotlinStaticResource") // this is handled properly
     private val executor: AsyncExecutor = gamePlatform.createAsyncExecutor(gamePlatform.cpuCores())
 
@@ -131,15 +133,13 @@ abstract class Future<T> protected constructor() {
 
     fun runAsync(function: () -> Unit): Future<Unit> {
       val future = invoke<Unit>()
-      Thread {
+      executor.submit {
         try {
           function()
           future.complete(Unit)
         } catch (e: Throwable) {
           future.completeExceptionally(e)
         }
-      }.apply {
-        start()
       }
 
       return future
@@ -147,21 +147,19 @@ abstract class Future<T> protected constructor() {
 
     fun <T> supplyAsync(function: () -> T): Future<T> {
       val future = invoke<T>()
-      Thread {
+      executor.submit {
         try {
           future.complete(function())
         } catch (e: Throwable) {
           future.completeExceptionally(e)
         }
-      }.apply {
-        start()
       }
 
       return future
     }
 
-    fun dispose() {
-      executor.dispose()
+    override fun dispose() {
+      executor.disposeSafely()
     }
 
     fun <T> supplyAsync(executor: AsyncExecutor, function: () -> T): Future<T> {

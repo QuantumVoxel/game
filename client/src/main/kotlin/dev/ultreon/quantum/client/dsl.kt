@@ -6,6 +6,9 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.graphics.g3d.attributes.*
 import dev.ultreon.quantum.InternalApi
+import net.mgsx.gltf.scene3d.attributes.MirrorAttribute
+import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute
+import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
 
 @DslMarker
 annotation class MaterialDsl
@@ -31,7 +34,7 @@ interface MaterialBuilder {
    *
    * @param texture The texture to be used as the diffuse map for the material.
    */
-  fun diffuse(texture: Texture)
+  fun baseColorTexture(texture: Texture)
 
   /**
    * Sets the diffuse texture for the material using a `TextureRegion`.
@@ -43,7 +46,9 @@ interface MaterialBuilder {
    *
    * @param texture The `TextureRegion` to use as the diffuse map for the material.
    */
-  fun diffuse(texture: TextureRegion)
+  fun baseColorTexture(texture: TextureRegion)
+
+  fun dynamicReflect()
 
   /**
    * Sets the diffuse color for the material.
@@ -53,7 +58,7 @@ interface MaterialBuilder {
    *
    * @param color The color to be applied as the diffuse property of the material.
    */
-  fun diffuse(color: Color)
+  fun baseColorFactor(color: Color)
 
   /**
    * Sets the emissive texture for the material.
@@ -63,7 +68,7 @@ interface MaterialBuilder {
    *
    * @param texture The texture to be applied as the emissive map for the material.
    */
-  fun emissive(texture: Texture)
+  fun emissiveTexture(texture: Texture)
 
   /**
    * Sets the emissive texture for the material using a `TextureRegion`.
@@ -73,18 +78,11 @@ interface MaterialBuilder {
    *
    * @param texture The `TextureRegion` to be applied as the emissive map for the material.
    */
-  fun emissive(texture: TextureRegion)
+  fun emissiveTexture(texture: TextureRegion)
 
-  /**
-   * Sets the emissive color for the material.
-   *
-   * The emissive color allows the material to emit light, creating a glowing effect.
-   * This property defines the self-illumination color of the material, making it appear
-   * as though it is radiating light regardless of external lighting in the scene.
-   *
-   * @param color The color to be applied as the emissive property of the material.
-   */
-  fun emissive(color: Color)
+  fun metallicRoughnessTexture(texture: Texture)
+
+  fun metallicRoughnessTexture(texture: TextureRegion)
 
   /**
    * Sets the normal texture for the material.
@@ -96,7 +94,7 @@ interface MaterialBuilder {
    *
    * @param texture The texture to be applied as the normal map for the material.
    */
-  fun normal(texture: Texture)
+  fun normalTexture(texture: Texture)
 
   /**
    * Sets the normal texture for the material using a `TextureRegion`.
@@ -108,42 +106,7 @@ interface MaterialBuilder {
    *
    * @param texture The `TextureRegion` to be applied as the normal map for the material.
    */
-  fun normal(texture: TextureRegion)
-
-  /**
-   * Sets the ambient texture for the material.
-   *
-   * The ambient texture defines how the material responds to ambient light,
-   * which is the indirect, all-encompassing light in a scene. This property
-   * affects the overall tone and coloring of the material under ambient lighting conditions.
-   *
-   * @param texture The texture to be applied as the ambient map for the material.
-   */
-  fun ambient(texture: Texture)
-
-  /**
-   * Sets the ambient texture for the material using a `TextureRegion`.
-   *
-   * The ambient texture determines how the material interacts with ambient lighting,
-   * which represents the indirect and scattered light present in the environment.
-   * This property influences the overall look and tone of the material under
-   * ambient lighting conditions. Using a `TextureRegion` allows specifying
-   * a specific portion of a texture as the ambient map.
-   *
-   * @param texture The `TextureRegion` to use as the ambient map for the material.
-   */
-  fun ambient(texture: TextureRegion)
-
-  /**
-   * Sets the ambient color for the material.
-   *
-   * The ambient color determines how the material responds to ambient light in the scene.
-   * This property influences the overall tone and illumination of the material under
-   * indirect lighting, providing a softer and more diffused lighting effect.
-   *
-   * @param color The color to be applied as the ambient property of the material.
-   */
-  fun ambient(color: Color)
+  fun normalTexture(texture: TextureRegion)
 
   /**
    * Sets the specular texture for the material.
@@ -167,28 +130,6 @@ interface MaterialBuilder {
    * @param texture The `TextureRegion` to be applied as the specular map for the material.
    */
   fun specular(texture: TextureRegion)
-
-  /**
-   * Sets the specular color for the material.
-   *
-   * The specular color determines the shininess and reflective properties of the material's surface.
-   * It controls how light interacts with the surface to produce highlights, influencing the appearance
-   * of glossiness or metallic effects.
-   *
-   * @param color The color to be applied as the specular property of the material.
-   */
-  fun specular(color: Color)
-
-  /**
-   * Sets the ambient light color for the material.
-   *
-   * The ambient light color defines how the material reacts to general light present in a scene.
-   * This property influences the overall brightness and tone of the material under ambient lighting conditions,
-   * simulating the effect of indirect, non-directional lighting.
-   *
-   * @param ambientLight The color representing the ambient light applied to the material.
-   */
-  fun ambientLight(ambientLight: Color)
 
   /**
    * Sets the fog color for the material.
@@ -236,7 +177,6 @@ interface MaterialBuilder {
    *
    */
   fun alphaTest(alpha: Float)
-
   /**
    * Configures depth testing for rendering operations.
    *
@@ -276,68 +216,56 @@ interface MaterialBuilder {
 class MaterialBuilderImpl : MaterialBuilder {
   private val material = Material()
 
-  override fun diffuse(texture: Texture) {
-    material.set(TextureAttribute.createDiffuse(texture))
+  override fun baseColorTexture(texture: Texture) {
+    material.set(PBRTextureAttribute.createBaseColorTexture(texture))
   }
 
-  override fun diffuse(texture: TextureRegion) {
-    material.set(TextureAttribute.createDiffuse(texture))
+  override fun baseColorTexture(texture: TextureRegion) {
+    material.set(PBRTextureAttribute.createBaseColorTexture(texture))
   }
 
-  override fun diffuse(color: Color) {
-    material.set(ColorAttribute.createDiffuse(color))
+  override fun dynamicReflect() {
+    material.set(MirrorAttribute.createSpecular())
   }
 
-  override fun emissive(texture: Texture) {
-    material.set(TextureAttribute.createEmissive(texture))
+  override fun baseColorFactor(color: Color) {
+    material.set(PBRColorAttribute.createBaseColorFactor(color))
   }
 
-  override fun emissive(texture: TextureRegion) {
-    material.set(TextureAttribute.createEmissive(texture))
+  override fun emissiveTexture(texture: Texture) {
+    material.set(PBRTextureAttribute.createEmissiveTexture(texture))
   }
 
-  override fun emissive(color: Color) {
-    material.set(ColorAttribute.createEmissive(color))
+  override fun emissiveTexture(texture: TextureRegion) {
+    material.set(PBRTextureAttribute.createEmissiveTexture(texture))
   }
 
-  override fun normal(texture: Texture) {
-    material.set(TextureAttribute.createNormal(texture))
+  override fun metallicRoughnessTexture(texture: Texture) {
+    material.set(PBRTextureAttribute.createMetallicRoughnessTexture(texture))
   }
 
-  override fun normal(texture: TextureRegion) {
-    material.set(TextureAttribute.createNormal(texture))
+  override fun metallicRoughnessTexture(texture: TextureRegion) {
+    material.set(PBRTextureAttribute.createMetallicRoughnessTexture(texture))
   }
 
-  override fun ambient(texture: Texture) {
-    material.set(TextureAttribute.createAmbient(texture))
+  override fun normalTexture(texture: Texture) {
+    material.set(PBRTextureAttribute.createNormalTexture(texture))
   }
 
-  override fun ambient(texture: TextureRegion) {
-    material.set(TextureAttribute.createAmbient(texture))
-  }
-
-  override fun ambient(color: Color) {
-    material.set(ColorAttribute.createAmbient(color))
+  override fun normalTexture(texture: TextureRegion) {
+    material.set(PBRTextureAttribute.createNormalTexture(texture))
   }
 
   override fun specular(texture: Texture) {
-    material.set(TextureAttribute.createSpecular(texture))
+    material.set(PBRTextureAttribute.createSpecularFactorTexture(texture))
   }
 
   override fun specular(texture: TextureRegion) {
-    material.set(TextureAttribute.createSpecular(texture))
-  }
-
-  override fun specular(color: Color) {
-    material.set(ColorAttribute.createSpecular(color))
-  }
-
-  override fun ambientLight(ambientLight: Color) {
-    material.set(ColorAttribute.createAmbientLight(ambientLight))
+    material.set(PBRTextureAttribute.createSpecularFactorTexture(texture))
   }
 
   override fun fog(fog: Color) {
-    material.set(ColorAttribute.createFog(fog))
+    material.set(PBRColorAttribute.createFog(fog))
   }
 
   override fun cullFace(cullFace: Int) {

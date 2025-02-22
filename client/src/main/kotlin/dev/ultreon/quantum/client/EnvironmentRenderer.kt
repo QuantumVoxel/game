@@ -445,6 +445,8 @@ class EnvironmentRenderer : Disposable {
     spriteBatch.projectionMatrix =
       spriteBatch.projectionMatrix.setToOrtho2D(0f, 0f, width.toFloat(), height.toFloat())
 
+    dimension?.onResize(width, height)
+
     hud.resize(
       width = (width / quantum.guiScale).toInt(),
       height = (height / quantum.guiScale).toInt()

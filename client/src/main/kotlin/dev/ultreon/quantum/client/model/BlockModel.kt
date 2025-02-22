@@ -5,6 +5,8 @@ import com.badlogic.gdx.graphics.g3d.Model
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder
 import com.badlogic.gdx.math.Vector3
 import dev.ultreon.quantum.client.world.AOArray
+import dev.ultreon.quantum.client.world.ModelInfo
+import dev.ultreon.quantum.client.world.RenderInfo
 import dev.ultreon.quantum.util.NamespaceID
 import kotlinx.coroutines.runBlocking
 import ktx.assets.disposeSafely
@@ -13,7 +15,7 @@ import ktx.assets.disposeSafely
 interface BlockModel : LoadableResource {
   val isCustom: Boolean
 
-  suspend fun loadIntoAsync(builder: MeshPartBuilder, x: Int, y: Int, z: Int, faceCull: FaceCull, aoArray: AOArray) {
+  suspend fun loadIntoAsync(builder: ModelBakery, x: Int, y: Int, z: Int, faceCull: FaceCull, aoArray: AOArray, renderInfo: RenderInfo, modelInfo: ModelInfo) {
     // Do nothing
   }
 
@@ -38,9 +40,9 @@ interface BlockModel : LoadableResource {
     val DEFAULT_ITEM_SCALE: Vector3 = Vector3(1f, 1f, 1f)
   }
 
-  fun loadInto(builder: MeshPartBuilder, x: Int, y: Int, z: Int, faceCull: FaceCull, aoArray: AOArray) {
+  fun loadInto(builder: ModelBakery, x: Int, y: Int, z: Int, faceCull: FaceCull, aoArray: AOArray, renderInfo: RenderInfo, modelInfo: ModelInfo) {
     runBlocking {
-      loadIntoAsync(builder, x, y, z, faceCull, aoArray)
+      loadIntoAsync(builder, x, y, z, faceCull, aoArray, renderInfo, modelInfo)
     }
   }
 }

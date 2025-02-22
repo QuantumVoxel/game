@@ -105,7 +105,7 @@ class GreedyMesher {
       modelBuilder.part(
         "meshPart",
         com.badlogic.gdx.graphics.GL20.GL_TRIANGLES,
-        VertexAttributes(VertexAttribute.Position(), VertexAttribute.Normal(), VertexAttribute.ColorPacked()),
+        VertexAttributes(VertexAttribute.Position(), VertexAttribute.Normal(), VertexAttribute.ColorUnpacked()),
         material
       )
     }

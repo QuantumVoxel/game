@@ -1,30 +1,21 @@
 package dev.ultreon.quantum.client.world
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.PerspectiveCamera
 import com.badlogic.gdx.graphics.g3d.*
-import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
-import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute.createAmbientLight
-import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight
-import com.badlogic.gdx.graphics.g3d.environment.ShadowMap
-import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader
-import com.badlogic.gdx.graphics.g3d.shaders.DepthShader
-import com.badlogic.gdx.graphics.g3d.utils.DefaultRenderableSorter
-import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider
-import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight
+import com.badlogic.gdx.graphics.profiling.GLProfiler
 import com.badlogic.gdx.math.GridPoint3
-import com.badlogic.gdx.math.Vector3
 import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.blocks.Block
 import dev.ultreon.quantum.blocks.Blocks
 import dev.ultreon.quantum.client.QuantumVoxel
-import dev.ultreon.quantum.client.modelBatch
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.math.Vector3D
 import dev.ultreon.quantum.util.BlockHit
-import dev.ultreon.quantum.util.NamespaceID
 import dev.ultreon.quantum.util.RayD
 import dev.ultreon.quantum.world.BlockFlags
 import dev.ultreon.quantum.world.Dimension
@@ -32,11 +23,24 @@ import dev.ultreon.quantum.world.SIZE
 import kotlinx.coroutines.yield
 import ktx.collections.GdxArray
 import ktx.collections.GdxSet
+import net.mgsx.gltf.scene3d.attributes.MirrorAttribute
+import net.mgsx.gltf.scene3d.attributes.MirrorSourceAttribute
+import net.mgsx.gltf.scene3d.attributes.PBRFlagAttribute
+import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute
+import net.mgsx.gltf.scene3d.attributes.PBRVolumeAttribute
+import net.mgsx.gltf.scene3d.lights.DirectionalLightEx
+import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight
+import net.mgsx.gltf.scene3d.scene.CascadeShadowMap
+import net.mgsx.gltf.scene3d.scene.MirrorSource
+import net.mgsx.gltf.scene3d.scene.SceneManager
+import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig
+import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.measureTimeMillis
 
 val renderDistance: Int
   get() = if (gamePlatform.isMobile) 4 else 8
+//  get() = 2
 
 open class ClientDimension(private val material: Material) : Dimension() {
   private lateinit var player: LocalPlayer
@@ -49,38 +53,69 @@ open class ClientDimension(private val material: Material) : Dimension() {
   private var toRebuild = listOf<ClientChunk>()
   private var time = 0f
 
-  private var sunLight: DirectionalShadowLight = DirectionalShadowLight(16384, 16384, 256F, 256F, 0.01F, 1000F)
-  private val environment: Environment = Environment().apply {
-    add(sunLight)
-    set(createAmbientLight(0.4f, 0.4f, 0.4f, 1f))
-
-    shadowMap = sunLight
+  private val mirror = MirrorSource()
+  private val cascadeShadowMap = CascadeShadowMap(4)
+  private var sunLight: DirectionalShadowLight = DirectionalShadowLight(2048, 2048).also {
+    it.intensity = 10f
   }
+  val sceneManager = SceneManager().also {
+    it.setAmbientLight(0f)
+    it.setMirrorSource(mirror)
+    it.environment.add(sunLight)
 
-  private val shadowBatch = ModelBatch(
-    if (gamePlatform.isWebGL3 || gamePlatform.isGL30 || gamePlatform.isGLES3) {
-      object : DepthShaderProvider(
-        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/depth.vsh")).text,
-        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/depth.fsh")).text
-      ) {
-        override fun createShader(renderable: Renderable): Shader {
-          return DepthShader(
-            renderable,
-            this.config,
-            "#version 300 es\n\n" + DefaultShader.createPrefix(renderable, config)
-          )
-        }
-      }
-    } else {
-      object : DepthShaderProvider(
-        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/depth.vsh")).text,
-        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/depth.fsh")).text
-      ) {
+    sunLight.color.set(Color.WHITE)
+    sunLight.updateColor()
+    it.environment.shadowMap = sunLight
+  }
+//  private val environment: Environment = Environment().apply {
+//    add(sunLight)
+//    set(createAmbientLight(0.4f, 0.4f, 0.4f, 1f))
+//
+//    shadowMap = sunLight
+//  }
 
-      }
-    },
-    DefaultRenderableSorter()
-  )
+//  private val shadowBatch = ModelBatch(
+//    if (gamePlatform.isWebGL3 || gamePlatform.isGL30 || gamePlatform.isGLES3) {
+//      object : DepthShaderProvider(
+//        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/depth.vsh")).text,
+//        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/depth.fsh")).text
+//      ) {
+//        override fun createShader(renderable: Renderable): Shader {
+//          return DepthShader(
+//            renderable,
+//            this.config,
+//            "#version 300 es\n\n" + DefaultShader.createPrefix(renderable, config)
+//          )
+//        }
+//      }
+//    } else {
+//      object : DepthShaderProvider(
+//        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/depth.vsh")).text,
+//        (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/depth.fsh")).text
+//      ) { }
+//    },
+//    DefaultRenderableSorter()
+//  )
+
+  init {
+//    sceneManager.setMirrorSource(mirror)
+    sceneManager.setCascadeShadowMap(cascadeShadowMap)
+
+    PBRShaderProvider.createDefault(PBRShaderConfig().also {
+      it.numDirectionalLights = 1
+      it.numPointLights = 16
+      it.numBones
+      it.manualGammaCorrection = false
+      it.manualSRGB = PBRShaderConfig.SRGB.NONE
+      it.mirrorSRGB = PBRShaderConfig.SRGB.NONE
+      it.transmissionSRGB = PBRShaderConfig.SRGB.NONE
+
+      sceneManager.setShaderProvider(PBRShaderProvider.createDefault(it))
+      sceneManager.setDepthShaderProvider(PBRShaderProvider.createDefaultDepth(3))
+    })
+
+    sceneManager.environment.set(PBRFloatAttribute(PBRFloatAttribute.ShadowBias, 1.0f / 256.0f))
+  }
 
   override fun get(x: Int, y: Int, z: Int): Block {
     return chunks[location(x.floorDiv(SIZE), y.floorDiv(SIZE), z.floorDiv(SIZE))]
@@ -290,7 +325,6 @@ open class ClientDimension(private val material: Material) : Dimension() {
     this@ClientDimension.toRebuild = toRebuild.toList()
 
     for (chunk in requiredChunks) {
-      logger.debug("Loading chunk ${chunk.first}")
       loadChunkAsync(chunk.first.x, chunk.first.y, chunk.first.z, build = true)
       gamePlatform.yield()
     }
@@ -333,26 +367,38 @@ open class ClientDimension(private val material: Material) : Dimension() {
   fun render(modelBatch: ModelBatch, camera: PerspectiveCamera) {
     sunLight.direction.set(0F, 0F, -1F).rotate(-time * 360 / 1000, 1F, 0F, 0F).rotate(40F, 0F, 0F, 1F)
     sunLight.color.set(1F, 1F, 1F, 1F)
-    sunLight.begin(Vector3.Zero, camera.direction)
-
-    shadowBatch.begin(sunLight.camera)
+//    sunLight.begin(Vector3.Zero, camera.direction)
+//
+//    shadowBatch.begin(sunLight.camera)
+//
+//    for (chunk: ClientChunk in chunks.values) {
+//      chunk.reposition(player.positionComponent.position)
+//      shadowBatch.render(chunk)
+//    }
+//
+//    shadowBatch.end()
+//    sunLight.end()
 
     for (chunk: ClientChunk in chunks.values) {
       chunk.reposition(player.positionComponent.position)
-      shadowBatch.render(chunk)
     }
 
-    shadowBatch.end()
-    sunLight.end()
 
-    for (chunk: ClientChunk in chunks.values) {
-      chunk.reposition(player.positionComponent.position)
-      modelBatch.render(chunk, environment)
+    val shadowLight = sceneManager.firstDirectionalShadowLight
+    if (shadowLight != null) {
+      cascadeShadowMap.setCascades(camera, shadowLight, 1000f, 4f)
     }
 
-    modelBatch.flush()
+    sceneManager.setCamera(camera)
+
+    sceneManager.update(Gdx.graphics.deltaTime)
+    sceneManager.render()
 
     time += Gdx.graphics.deltaTime
+  }
+
+  fun onResize(width: Int, height: Int) {
+    sceneManager.updateViewport(width.toFloat(), height.toFloat())
   }
 
   override fun dispose() {

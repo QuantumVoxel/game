@@ -71,6 +71,8 @@ sourceSets {
 dependencies {
     api project(':common')
 
+    api "com.github.mgsx-dev.gdx-gltf:gltf:$gltfVersion"
+
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
     api "com.github.tommyettinger:regexodus:$regExodusVersion"
     api "com.github.tommyettinger:textratypist:$textratypistVersion"

@@ -8,7 +8,6 @@ import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute
 import com.badlogic.gdx.graphics.g3d.attributes.DepthTestAttribute
 import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute
-import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo
@@ -22,6 +21,8 @@ import com.badlogic.gdx.utils.JsonValue
 import dev.ultreon.quantum.blocks.Block
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.client.world.AOArray
+import dev.ultreon.quantum.client.world.ModelInfo
+import dev.ultreon.quantum.client.world.RenderInfo
 import dev.ultreon.quantum.id
 import dev.ultreon.quantum.item.Item
 import dev.ultreon.quantum.key
@@ -35,6 +36,7 @@ import dev.ultreon.quantum.resource.ResourceManager
 import dev.ultreon.quantum.util.Direction
 import dev.ultreon.quantum.util.Direction.*
 import dev.ultreon.quantum.util.NamespaceID
+import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
 import java.io.IOException
 import java.util.*
 
@@ -359,7 +361,7 @@ class JsonModelLoader @JvmOverloads constructor(
         meshBuilder.begin(
           VertexAttributes(
             VertexAttribute.Position(),
-            VertexAttribute.ColorPacked(),
+            VertexAttribute.ColorUnpacked(),
             VertexAttribute.Normal(),
             VertexAttribute.TexCoords(0)
           ), GL20.GL_TRIANGLES
@@ -437,7 +439,7 @@ class JsonModelLoader @JvmOverloads constructor(
         meshBuilder.rect(v00, v10, v11, v01)
 
         val material = Material()
-        material.set(TextureAttribute.createDiffuse(quantum.textureManager[texture]))
+        material.set(PBRTextureAttribute.createBaseColorTexture(quantum.textureManager[texture]))
         material.set(BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA))
         material.set(FloatAttribute(FloatAttribute.AlphaTest))
         material.set(DepthTestAttribute(GL20.GL_LEQUAL))
@@ -445,7 +447,7 @@ class JsonModelLoader @JvmOverloads constructor(
       }
 
       val end = nodeBuilder.end()
-      val node = modelBuilder.node("[$idx]", end)
+      val node = modelBuilder.node()
 
       val originVec = rotation.originVec
       val axis: Axis = rotation.axis
@@ -536,8 +538,11 @@ class JsonModelLoader @JvmOverloads constructor(
       x: Int,
       y: Int,
       z: Int,
-      builder: MeshPartBuilder,
+      builder: ModelBakery,
+      renderInfo: RenderInfo,
       textureElements: Map<String, NamespaceID>,
+      modelInfo: ModelInfo,
+      jsonModel: JsonModel
     ) {
       val blockFaceFaceElementMap: Map<Direction, FaceElement> = this.blockFaceFaceElementMap
       val v00 = VertexInfo()
@@ -565,7 +570,7 @@ class JsonModelLoader @JvmOverloads constructor(
         v10.setNor(direction.normal)
         v11.setNor(direction.normal)
 
-        val region = quantum.textureManager[texture!!]
+        val region = renderInfo.textureOffset.get(modelInfo, texture ?: continue, jsonModel) ?: continue
 
         val us = region.u2 - region.u
         val vs = region.v2 - region.v
@@ -636,7 +641,7 @@ class JsonModelLoader @JvmOverloads constructor(
         v10.position.scl(1 / 16F).add(x.toFloat(), y.toFloat(), z.toFloat())
         v11.position.scl(1 / 16F).add(x.toFloat(), y.toFloat(), z.toFloat())
 
-        builder.rect(v00, v10, v11, v01)
+        builder.node(renderInfo, texture).rect(v00, v10, v11, v01)
       }
     }
 

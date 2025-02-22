@@ -46,12 +46,12 @@ import dev.ultreon.quantum.scripting.ContextValue
 import dev.ultreon.quantum.scripting.PersistentData
 import dev.ultreon.quantum.scripting.function.function
 import dev.ultreon.quantum.async.Future
+import dev.ultreon.quantum.client.world.RenderInfo
 import dev.ultreon.quantum.util.NamespaceID
 import ktx.app.*
 import ktx.assets.disposeSafely
 import ktx.async.MainDispatcher
 import space.earlygrey.shapedrawer.ShapeDrawer
-import java.io.FileNotFoundException
 import java.util.zip.ZipInputStream
 import kotlin.math.min
 
@@ -85,6 +85,11 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     instance = this
   }
 
+  val thread = Thread.currentThread()
+
+  val isOnRenderThread: Boolean
+    get() = Thread.currentThread().id == thread.id
+  val blockAtlas: Texture get() = texture.texture
   var chunkQueue: Int = 0
   val chat: ChatGui = ChatGui()
   var connection: Connection? = null
@@ -130,7 +135,8 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
   private val texture by lazy { texture(NamespaceID.of(path = "textures/blocks/soil.png")) }
   val material by lazy {
     material {
-      diffuse(texture.texture)
+      baseColorTexture(texture.texture)
+      baseColorFactor(Color.WHITE)
       cullFace(GL20.GL_BACK)
       blendMode(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
       alphaTest(0.01f)
@@ -249,6 +255,9 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     ClientConditions
 
     doContentRegistration()
+
+    RenderInfo
+
     clientEvents.load()
 
     guiCam = OrthographicCamera()

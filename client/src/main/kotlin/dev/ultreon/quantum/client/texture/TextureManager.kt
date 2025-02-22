@@ -161,6 +161,25 @@ class TextureManager(val resourceManager: ResourceManager) : Disposable {
     }
   }
 
+  operator fun get(texture: NamespaceID, fallbackTexture: TextureRegion?): TextureRegion? {
+    check(texture.path.startsWith("textures/")) { "Not starting with textures category!" }
+    val location = texture.mapPath { it.substringAfter("textures/") }
+    val atlas = atlases[location.path.split("/")[0]] ?: run {
+      if (location.path.split("/")[0] !in atlasWarns) {
+        logger.warn("Atlas not found: ${location.path.split("/")[0]}")
+        atlasWarns += location.path.split("/")[0]
+      }
+      return fallbackTexture
+    }
+    return atlas.findRegion("$texture") ?: run {
+      if (location !in warns) {
+        logger.warn("Texture not found: $texture")
+        warns += location
+      }
+      fallbackTexture
+    }
+  }
+
   override fun dispose() {
     atlases.forEach { (_, atlas) ->
       atlas.disposeSafely()

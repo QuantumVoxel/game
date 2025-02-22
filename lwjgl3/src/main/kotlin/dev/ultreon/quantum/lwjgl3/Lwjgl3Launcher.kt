@@ -71,7 +71,26 @@ fun main() {
 
         OpenGLApp(QuantumVoxel(), OpenGLConfig().apply {
           setTitle("Quantum Voxel")
-          setWindowedMode(MINIMUM_WIDTH * 3 - 2, MINIMUM_HEIGHT * 3 - 2)
+          val monitor = OpenGLConfig.getPrimaryMonitor().let { primaryMonitor ->
+            val primaryMode = OpenGLConfig.getDisplayMode(primaryMonitor)
+            if (primaryMode.width - 64 < MINIMUM_WIDTH * 3 - 2 && primaryMode.height - 64 < MINIMUM_HEIGHT * 3 - 2) {
+              return@let OpenGLConfig.getMonitors().asSequence().sortedByDescending { it.virtualX }.firstOrNull {
+                val displayMode = OpenGLConfig.getDisplayMode(it)
+                displayMode.width - 64 < MINIMUM_WIDTH * 3 - 2 && displayMode.height - 64 < MINIMUM_HEIGHT * 3 - 2
+              } ?: run { primaryMonitor }
+            }
+
+            return@let primaryMonitor
+          }
+
+          val displayMode = OpenGLConfig.getDisplayMode(monitor)
+//          if (displayMode.width - 64 < MINIMUM_WIDTH * 3 - 2 && displayMode.height - 64 < MINIMUM_HEIGHT * 3 - 2) {
+//            setWindowedMode(MINIMUM_WIDTH * 3 - 2, MINIMUM_HEIGHT * 3 - 2)
+//          } else {
+//            setWindowedMode(MINIMUM_WIDTH * 2, MINIMUM_HEIGHT * 2)
+//          }
+          setMaximized(true)
+          setMaximizedMonitor(monitor)
           setForegroundFPS(0)
           useVsync(false)
           setOpenGLEmulation(OpenGLConfig.GLEmulation.GL32, 3, 2)

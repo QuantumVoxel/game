@@ -6,8 +6,9 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.math.Vector3
 import dev.ultreon.quantum.client.model.JsonModelLoader.ModelElement
 import dev.ultreon.quantum.client.world.AOArray
+import dev.ultreon.quantum.client.world.ModelInfo
+import dev.ultreon.quantum.client.world.RenderInfo
 import dev.ultreon.quantum.util.NamespaceID
-import kotlinx.coroutines.yield
 import ktx.assets.disposeSafely
 import java.util.function.Consumer
 
@@ -34,29 +35,31 @@ class JsonModel(
     }
   }
 
-  override fun loadInto(builder: MeshPartBuilder, x: Int, y: Int, z: Int, faceCull: FaceCull, aoArray: AOArray) {
+  override fun loadInto(builder: ModelBakery, x: Int, y: Int, z: Int, faceCull: FaceCull, aoArray: AOArray, renderInfo: RenderInfo, modelInfo: ModelInfo) {
     var i = 0
     val modelElementsSize = modelElements.size
     while (i < modelElementsSize) {
       val modelElement: ModelElement = modelElements[i]
-      modelElement.loadInto(i, faceCull, aoArray, x, y, z, builder, textureElements)
+      modelElement.loadInto(i, faceCull, aoArray, x, y, z, builder, renderInfo, textureElements, modelInfo, this)
       i++
     }
   }
 
   override suspend fun loadIntoAsync(
-    builder: MeshPartBuilder,
+    builder: ModelBakery,
     x: Int,
     y: Int,
     z: Int,
     faceCull: FaceCull,
-    aoArray: AOArray
+    aoArray: AOArray,
+    renderInfo: RenderInfo,
+    modelInfo: ModelInfo
   ) {
     var i = 0
     val modelElementsSize = modelElements.size
     while (i < modelElementsSize) {
       val modelElement: ModelElement = modelElements[i]
-      modelElement.loadInto(i, faceCull, aoArray, x, y, z, builder, textureElements)
+      modelElement.loadInto(i, faceCull, aoArray, x, y, z, builder, renderInfo, textureElements, modelInfo, this)
       i++
     }
   }

@@ -1,10 +1,7 @@
 package dev.ultreon.quantum.client.world
 
-import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.VertexAttribute
-import com.badlogic.gdx.graphics.VertexAttributes
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g3d.*
-import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder
 import com.badlogic.gdx.math.GridPoint3
 import com.badlogic.gdx.math.Vector3
@@ -12,13 +9,14 @@ import com.badlogic.gdx.math.collision.BoundingBox
 import com.badlogic.gdx.utils.Pool
 import dev.ultreon.quantum.blocks.Block
 import dev.ultreon.quantum.blocks.Blocks
-import dev.ultreon.quantum.client.QuantumVoxel
 import dev.ultreon.quantum.client.model.FaceCull
 import dev.ultreon.quantum.client.model.ModelRegistry
-import dev.ultreon.quantum.client.relative
 import dev.ultreon.quantum.math.Vector3D
 import dev.ultreon.quantum.async.Future
+import dev.ultreon.quantum.client.*
+import dev.ultreon.quantum.client.model.ModelBakery
 import dev.ultreon.quantum.logger
+import dev.ultreon.quantum.util.id
 import dev.ultreon.quantum.vec3d
 import dev.ultreon.quantum.world.BlockFlags
 import dev.ultreon.quantum.world.Chunk
@@ -26,6 +24,10 @@ import dev.ultreon.quantum.world.SIZE
 import ktx.assets.disposeSafely
 import ktx.collections.GdxArray
 import ktx.math.vec3
+import net.mgsx.gltf.scene3d.attributes.MirrorAttribute
+import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute
+import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute
+import net.mgsx.gltf.scene3d.scene.Scene
 
 var allLoading = 0
   private set
@@ -34,6 +36,7 @@ private val lastLoad: Long get() = System.currentTimeMillis()
 
 class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val dimension: ClientDimension) : Chunk(),
   RenderableProvider {
+  private val modelBuilder = ModelBuilder()
   private val _boundingBox: BoundingBox = BoundingBox()
   val boundingBox: BoundingBox
     get() {
@@ -41,6 +44,14 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
       _boundingBox.max.set(renderPosition).add(SIZE.toFloat(), SIZE.toFloat(), SIZE.toFloat())
       return _boundingBox
     }
+
+  val waterMaterial: Material = Material().also {
+    it.set(PBRColorAttribute.createBaseColorFactor(Color.WHITE))
+    it.set(PBRTextureAttribute.createBaseColorTexture(textureManager[id(path = "textures/block/water.png")]))
+    it.set(PBRTextureAttribute.createMetallicRoughnessTexture(textureManager[id(path = "textures/block/water.mr.png")]))
+    it.set(PBRTextureAttribute.createNormalTexture(textureManager[id(path = "textures/block/water.normal.png")]))
+    it.set(MirrorAttribute.createSpecular())
+  }
 
   val renderPosition: Vector3 = vec3()
   internal var loading: Boolean = true
@@ -57,8 +68,7 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
   val chunkPos: GridPoint3 = GridPoint3(x, y, z)
   val blocks = Array(SIZE) { Array(SIZE) { Array(SIZE) { Blocks.air } } }
   private var worldModel: Model? = null
-  var worldModelInstance: ModelInstance? = null
-    private set
+  var chunkScene: Scene? = null
 
   override val offset: Vector3D
     get() = vec3d(chunkPos.x * SIZE, chunkPos.y * SIZE, chunkPos.z * SIZE)
@@ -72,7 +82,7 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
   }
 
   override fun isDisposed(): Boolean {
-    return worldModelInstance == null
+    return chunkScene == null
   }
 
   override fun set(x: Int, y: Int, z: Int, block: Block, flags: BlockFlags) {
@@ -118,7 +128,7 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
     }
   }
 
-  suspend fun rebuildAsync() {
+  fun rebuildAsync() {
     dirty = false
     loading = true
 
@@ -134,102 +144,67 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
       if (allLoading > 1000 || dimension.chunks.size + allLoading > 8000) {
         throw ProtectionFault("Too many chunks loading")
       }
-      QuantumVoxel {
-        val part1 = builder.part(
-          "world#default", GL20.GL_TRIANGLES, VertexAttributes(
-            VertexAttribute.Position(),
-            VertexAttribute.Normal(),
-            VertexAttribute.ColorPacked(),
-            VertexAttribute.TexCoords(0)
-          ), this@ClientChunk.material
-        )
-        for (x in 0..<SIZE) {
-          for (y in 0..<SIZE) {
-            for (z in 0..<SIZE) {
-              loadBlockInto(part1, x, y, z)
-            }
-          }
-        }
-      }
-      QuantumVoxel {
-        val part2 = builder.part(
-          "world#water", GL20.GL_TRIANGLES, VertexAttributes(
-            VertexAttribute.Position(),
-            VertexAttribute.Normal(),
-            VertexAttribute.ColorPacked(),
-            VertexAttribute.TexCoords(0)
-          ), this@ClientChunk.material
-        )
-        for (x in 0..<SIZE) {
-          for (y in 0..<SIZE) {
-            for (z in 0..<SIZE) {
-              loadBlockInto(part2, x, y, z, renderType = "water")
-            }
-          }
-        }
-      }
-      QuantumVoxel {
-        val part3 = builder.part(
-          "world#water", GL20.GL_TRIANGLES, VertexAttributes(
-            VertexAttribute.Position(),
-            VertexAttribute.Normal(),
-            VertexAttribute.ColorPacked(),
-            VertexAttribute.TexCoords(0)
-          ), this@ClientChunk.material
-        )
-        for (x in 0..<SIZE) {
-          for (y in 0..<SIZE) {
-            for (z in 0..<SIZE) {
-              loadBlockInto(part3, x, y, z, renderType = "foliage")
-            }
-          }
-        }
-      }
 
+      QuantumVoxel {
+        val bakery = ModelBakery(builder)
+
+        for (x in 0..<SIZE) {
+          for (y in 0..<SIZE) {
+            for (z in 0..<SIZE) {
+              val block = getSafe(x, y, z)
+              loadBlockInto(bakery, x, y, z, block, RenderInfo[block.renderType])
+            }
+          }
+        }
+      }
 
       QuantumVoxel {
         // Hotswap model and model instance
-        if (worldModelInstance != null || worldModel != null) {
+        if (chunkScene != null || worldModel != null) {
+          if (chunkScene?.lights != null) dimension.sceneManager.removeScene(chunkScene)
           worldModel.disposeSafely()
           worldModel = null
-          worldModelInstance = null
+          chunkScene = null
         }
 
         val model = builder.end()
         worldModel = model
-        worldModelInstance = ModelInstance(worldModel)
+        chunkScene = Scene(worldModel)
         loading = false
         allLoading--
+        dimension.sceneManager.addScene(chunkScene)
+
       }
     }.apply {
       onFailure = {
-        logger.error("Failed to build chunk", it)
+        logger.error("Failed to build chunk", it.stackTraceToString())
       }
     }
   }
 
   private fun loadBlockInto(
-    meshPartBuilder: MeshPartBuilder,
+    bakery: ModelBakery,
     x: Int,
     y: Int,
     z: Int,
-    renderType: String = "default",
+    block: Block,
+    info: RenderInfo = RenderInfo.default,
   ) {
-    val block = getSafe(x, y, z)
     if (block != Blocks.air) {
       val model = ModelRegistry[block]
-      if (renderType != block.renderType) {
+      if (info.name != block.renderType) {
         return
       }
       model.loadInto(
-        meshPartBuilder, x, y, z, FaceCull(
+        bakery, x, y, z, FaceCull(
           back = getSafe(x, y, z + 1).let { it != Blocks.air && it.renderType == block.renderType },
           front = getSafe(x, y, z - 1).let { it != Blocks.air && it.renderType == block.renderType },
           left = getSafe(x - 1, y, z).let { it != Blocks.air && it.renderType == block.renderType },
           right = getSafe(x + 1, y, z).let { it != Blocks.air && it.renderType == block.renderType },
           top = getSafe(x, y + 1, z).let { it != Blocks.air && it.renderType == block.renderType },
           bottom = getSafe(x, y - 1, z).let { it != Blocks.air && it.renderType == block.renderType }
-        ), AOArray.calculate(this, x, y, z)
+        ), AOArray.calculate(this, x, y, z),
+        info, ModelInfo(block.element)
       )
 
       this.hasBlocks = true
@@ -248,14 +223,17 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
 
   override fun getRenderables(array: GdxArray<Renderable>, pool: Pool<Renderable>) {
     if (!hasBlocks) return
-    worldModelInstance?.getRenderables(array, pool)
+    chunkScene?.getRenderables(array, pool)
   }
 
   fun disposeChunk(): Boolean {
+    if (!quantum.isOnRenderThread) throw ProtectionFault("Wrong thread")
     if (loading) {
       return false
     }
 
+    if (chunkScene != null) dimension.sceneManager.removeScene(chunkScene)
+    chunkScene = null
     worldModel.disposeSafely()
     return true
   }
@@ -265,12 +243,12 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
   }
 
   fun reposition(position: Vector3D) {
-    worldModelInstance?.relative(
+    chunkScene?.relative(
       position.cpy()
         .sub(this.chunkPos.x * SIZE.toFloat(), this.chunkPos.y * SIZE.toFloat(), this.chunkPos.z * SIZE.toFloat())
     )
 
-    worldModelInstance?.transform?.getTranslation(renderPosition)
+    chunkScene?.modelInstance?.transform?.getTranslation(renderPosition)
   }
 
   fun markDirty() {

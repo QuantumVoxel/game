@@ -28,6 +28,7 @@ import dev.ultreon.quantum.vec3d
 import ktx.math.mat4
 import ktx.math.unaryMinus
 import ktx.math.vec3
+import net.mgsx.gltf.scene3d.scene.Scene
 import org.intellij.lang.annotations.Language
 
 
@@ -46,7 +47,7 @@ inline fun ModelBuilder.part(
   vertexAttributes: VertexAttributes = VertexAttributes(
     VertexAttribute.Position(),
     VertexAttribute.Normal(),
-    VertexAttribute.ColorPacked(),
+    VertexAttribute.ColorUnpacked(),
     VertexAttribute.TexCoords(0)
   ),
   primitiveType: Int = GL20.GL_TRIANGLES,
@@ -143,6 +144,11 @@ inline fun texture(path: String, crossinline init: Texture.() -> Unit = {}): Tex
  */
 fun texture(namespaceID: NamespaceID): TextureRegion {
   val texture = quantum.textureManager[namespaceID]
+  return texture
+}
+
+fun textureOrNull(namespaceID: NamespaceID): TextureRegion? {
+  val texture = quantum.textureManager[namespaceID, null]
   return texture
 }
 
@@ -613,6 +619,25 @@ fun ModelInstance.relative(position: Vector3D): ModelInstance {
   this.transform.setTranslation(-(tmpVecD.set(position.x, position.y, position.z).sub(vec3d()).let {
     return@let tmpVec.set(it.x.toFloat(), it.y.toFloat(), it.z.toFloat())
   }))
+  return this
+}
+
+/**
+ * Adjusts the `ModelInstance`'s position relative to the given `Camera` and `Vector3D` position.
+ *
+ * This function modifies the translation of the `ModelInstance`'s transformation matrix
+ * by calculating the difference between the specified `position` and the `camera`'s current position.
+ * The resulting translation ensures the `ModelInstance` is positioned correctly in relation to the camera and the target position.
+ *
+ * The reason this is used is to prevent mesh tearing issues due to floating point precision on large distances.
+ *
+ * @receiver The `ModelInstance` whose transformation will be adjusted.
+ * @param camera The camera used to determine the reference position for the adjustment.
+ * @param position The target `Vector3D` position used to compute the relative position.
+ * @return The updated `ModelInstance` with adjusted transformation.
+ */
+fun Scene.relative(position: Vector3D): Scene {
+  this.modelInstance.relative(position)
   return this
 }
 

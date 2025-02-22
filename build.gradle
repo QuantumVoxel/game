@@ -89,7 +89,7 @@ subprojects {
     maven { url 'https://s01.oss.sonatype.org/content/repositories/releases/' }
 
     maven {
-      url = uri("https://maven.pkg.github.com/Ultreon/quantumvoxel-recomp")
+      url = uri("https://maven.pkg.github.com/Ultreon/XinexLib")
       credentials {
         username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
         password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
@@ -109,7 +109,7 @@ subprojects {
 
       repositories {
         maven {
-          url = uri("https://maven.pkg.github.com/Ultreon/quantumvoxel-recomp")
+          url = uri("https://maven.pkg.github.com/QuantumVoxel/game")
           credentials {
             username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
             password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")

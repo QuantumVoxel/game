@@ -1,12 +1,12 @@
 package dev.ultreon.quantum.client.debug
 
-import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.GLFrameBuffer
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
+import com.badlogic.gdx.graphics.profiling.GLProfiler
 import dev.ultreon.quantum.client.draw
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.client.world.LocalPlayer
@@ -23,6 +23,11 @@ class DebugRenderer {
   var line = 1
   var page = 0
     private set
+
+  val profiler = GLProfiler(Gdx.graphics).also {
+    it.enable()
+  }
+
 
   fun render() {
     line = 1
@@ -42,6 +47,8 @@ class DebugRenderer {
         5 -> drawDebugPage6(it, player)
       }
     }
+
+    profiler.reset()
   }
 
   fun drawDebugPage1(batch: SpriteBatch, player: LocalPlayer?) {
@@ -108,7 +115,10 @@ class DebugRenderer {
   }
 
   fun drawDebugPage2(batch: SpriteBatch, player: LocalPlayer?) {
-    left("📦", "Chunk Queue Size", quantum.chunkQueue)
+    left("📦", "Vertex Count", profiler.vertexCount.total)
+    left("📦", "Draw Calls", profiler.drawCalls)
+    left("📦", "Vertex / Draw Call", profiler.vertexCount.total / profiler.drawCalls)
+    left("📦", "GL Calls", profiler.calls)
   }
 
   fun drawDebugPage3(batch: SpriteBatch, player: LocalPlayer?) {

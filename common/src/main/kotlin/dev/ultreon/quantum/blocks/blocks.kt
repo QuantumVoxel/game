@@ -19,6 +19,7 @@ import dev.ultreon.quantum.util.NamespaceID
 import dev.ultreon.quantum.util.asIdOrNull
 import dev.ultreon.quantum.util.id
 import dev.ultreon.quantum.vec3d
+import dev.ultreon.quantum.world.BlockElement
 import ktx.collections.GdxArray
 import ktx.collections.gdxArrayOf
 import ktx.collections.toGdxArray
@@ -26,6 +27,7 @@ import ktx.math.vec3
 import kotlin.reflect.KProperty
 
 class Block : ContextAware<Block> {
+  val element: BlockElement = BlockElement(this)
   val definition: BlockStateDefinition = BlockStateDefinition(GdxArray())
   val isOpaque: Boolean
     get() = renderType == "default"
