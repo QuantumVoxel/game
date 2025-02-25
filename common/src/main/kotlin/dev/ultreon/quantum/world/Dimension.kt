@@ -6,7 +6,6 @@ import com.badlogic.gdx.utils.Disposable
 import com.badlogic.gdx.utils.JsonValue
 import dev.ultreon.quantum.blocks.Block
 import dev.ultreon.quantum.blocks.Blocks
-import dev.ultreon.quantum.client.scripting.TSApi
 import dev.ultreon.quantum.math.BoundingBoxD
 import dev.ultreon.quantum.scripting.*
 import dev.ultreon.quantum.scripting.function.VirtualFunction
@@ -35,7 +34,7 @@ value class BlockFlags(val value: Int) {
   }
 }
 
-abstract class Dimension : Disposable, TSApi, ContextAware<Dimension> {
+abstract class Dimension : Disposable, ContextAware<Dimension> {
   val entityManager: EntityManager = EntityManager(this)
 
   abstract operator fun get(x: Int, y: Int, z: Int): Block

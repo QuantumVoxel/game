@@ -19,7 +19,7 @@ import java.util.function.IntFunction
  * While the data itself is stored without any duplicates.
  *
  * @param <D> the data type.
- * @author <a href="https://github.com/XyperCode">XyperCode</a>
+ * @author <a href="https://github.com/XyperCode">Qubilux</a>
 </D> */
 @ExperimentalQuantumApi
 class PaletteStorage<D : Any> : Disposable, Storage<D> {

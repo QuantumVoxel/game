@@ -71,6 +71,10 @@ class CallContext(val originJson: JsonValue = JsonValue(JsonValue.ValueType.null
     return paramValues[name]
   }
 
+  fun getJson(s: String): JsonValue? {
+    return paramValues[s]?.value as? JsonValue
+  }
+
   companion object {
     fun from(value: JsonValue): CallContext? {
       val context = CallContext(value)

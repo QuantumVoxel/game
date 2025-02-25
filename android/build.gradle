@@ -1,166 +1,171 @@
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
 
 buildscript {
-  repositories {
-    mavenCentral()
-    google()
-  }
+    repositories {
+        mavenCentral()
+        google()
+    }
 }
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-  namespace "dev.ultreon.quantum"
-  compileSdk 34
-  sourceSets {
-    main {
-      manifest.srcFile 'AndroidManifest.xml'
-      java.setSrcDirs(['src/main/java', 'src/main/kotlin'])
-      aidl.setSrcDirs(['src/main/java', 'src/main/kotlin'])
-      renderscript.setSrcDirs(['src/main/java', 'src/main/kotlin'])
-      res.setSrcDirs(['res'])
-      assets.setSrcDirs(['../assets', '../build/modules'])
-      jniLibs.setSrcDirs(['libs'])
+    namespace "dev.ultreon.quantum"
+    compileSdk 34
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.setSrcDirs(['src/main/java', 'src/main/kotlin'])
+            aidl.setSrcDirs(['src/main/java', 'src/main/kotlin'])
+            renderscript.setSrcDirs(['src/main/java', 'src/main/kotlin'])
+            res.setSrcDirs(['res'])
+            assets.setSrcDirs(['../assets', '../build/modules'])
+            jniLibs.setSrcDirs(['libs'])
+        }
     }
-  }
-  packagingOptions {
-    resources {
-      excludes += ['META-INF/robovm/ios/robovm.xml', 'META-INF/DEPENDENCIES.txt', 'META-INF/INDEX.LIST', 'META-INF/DEPENDENCIES',
-                   'META-INF/dependencies.txt', '**/*.gwt.xml', "META-INF/native-image/**/*", "META-INF/native-image/**/*"]
-      pickFirsts += ['META-INF/LICENSE.txt', 'META-INF/LICENSE', 'META-INF/license.txt', 'META-INF/LGPL2.1',
-                     'META-INF/NOTICE.txt', 'META-INF/io.netty.versions.properties', 'META-INF/NOTICE', 'META-INF/notice.txt', 'META-INF/vertx/vertx-version.txt',
-                     'kotlin/internal/internal.kotlin_builtins', 'kotlin/reflect/reflect.kotlin_builtins', "**/*.rl", "**/*.glsl"]
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/robovm/ios/robovm.xml', 'META-INF/DEPENDENCIES.txt', 'META-INF/INDEX.LIST', 'META-INF/DEPENDENCIES',
+                         'META-INF/dependencies.txt', '**/*.gwt.xml', "META-INF/native-image/**/*", "META-INF/native-image/**/*"]
+            pickFirsts += ['META-INF/LICENSE.txt', 'META-INF/LICENSE', 'META-INF/license.txt', 'META-INF/LGPL2.1',
+                           'META-INF/NOTICE.txt', 'META-INF/io.netty.versions.properties', 'META-INF/NOTICE', 'META-INF/notice.txt', 'META-INF/vertx/vertx-version.txt',
+                           'kotlin/internal/internal.kotlin_builtins', 'kotlin/reflect/reflect.kotlin_builtins', "**/*.rl", "**/*.glsl"]
+        }
     }
-  }
-  defaultConfig {
-    applicationId 'dev.ultreon.quantum'
-    minSdkVersion 26
-    targetSdkVersion 34
-    versionCode 1
-    versionName "1.0"
-    multiDexEnabled true
-  }
-  compileOptions {
-    sourceCompatibility "8"
-    targetCompatibility "8"
-    coreLibraryDesugaringEnabled true
-  }
-  signingConfigs {
-    if (findProperty("android.keystore")) {
-      release {
-        storeFile property("android.keystore")
-        storePassword property("android.keystore.password")
-      }
+    defaultConfig {
+        applicationId 'dev.ultreon.quantum'
+        minSdkVersion 26
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+    }
+    compileOptions {
+        sourceCompatibility "8"
+        targetCompatibility "8"
+        coreLibraryDesugaringEnabled true
     }
 
-    debug {
-      storeFile file("../debug.keystore")
-      storePassword "android"
-      keyAlias "androiddebugkey"
-      keyPassword "android"
-    }
-  }
-  buildTypes {
-    release {
-      minifyEnabled true
-      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    buildFeatures {
+        buildConfig = true
     }
 
-    debug {
-      minifyEnabled false
-      debuggable true
-      profileable true
-    }
-  }
+    signingConfigs {
+        if (findProperty("android.keystore")) {
+            release {
+                storeFile property("android.keystore")
+                storePassword property("android.keystore.password")
+            }
+        }
 
-  kotlin.compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+        debug {
+            storeFile file("../debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            minifyEnabled false
+            debuggable true
+            profileable true
+        }
+    }
+
+    kotlin.compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
 
 }
 
 repositories {
-  // needed for AAPT2, may be needed for other tools
-  google()
+    // needed for AAPT2, may be needed for other tools
+    google()
 }
 
 configurations { natives }
 
 dependencies {
-  coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
-  implementation "com.badlogicgames.gdx-controllers:gdx-controllers-android:$gdxControllersVersion"
-  //noinspection GradleDependency
-  implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
-  implementation "de.tomgrill.gdxdialogs:gdx-dialogs-android:$dialogsVersion"
-  implementation project(':client'), {
-    exclude group: "com.caoccao.javet", module: "javet"
-    exclude group: "org.aya-prover.gdx-box2d", module: "box2d"
-  }
-  implementation 'androidx.core:core-ktx:1.12.0' // Use the latest version available
-  natives implementation('com.caoccao.javet:javet-node-android:4.1.1')
-  natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-arm64-v8a"
-  natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-armeabi-v7a"
-  natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86"
-  natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86_64"
-  natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
-  natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
-  natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
-  natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
-  implementation 'com.caoccao.javet:javet-node-android:4.1.1'
-  implementation 'com.caoccao.javet:javenode:0.8.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    implementation "com.badlogicgames.gdx-controllers:gdx-controllers-android:$gdxControllersVersion"
+    //noinspection GradleDependency
+    implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+    implementation "de.tomgrill.gdxdialogs:gdx-dialogs-android:$dialogsVersion"
+    implementation project(':client'), {
+        exclude group: "com.caoccao.javet", module: "javet"
+        exclude group: "org.aya-prover.gdx-box2d", module: "box2d"
+    }
+    implementation 'androidx.core:core-ktx:1.12.0' // Use the latest version available
+    natives implementation('com.caoccao.javet:javet-node-android:4.1.1')
+    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-arm64-v8a"
+    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-armeabi-v7a"
+    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86"
+    natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86_64"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
+    implementation 'com.caoccao.javet:javet-node-android:4.1.1'
+    implementation 'com.caoccao.javet:javenode:0.8.0'
 }
 
 // Called every time gradle gets executed, takes the native dependencies of
 // the natives configuration, and extracts them to the proper libs/ folders
 // so they get packed with the APK.
 tasks.register('copyAndroidNatives') {
-  doFirst {
-    file("libs/armeabi-v7a/").mkdirs()
-    file("libs/arm64-v8a/").mkdirs()
-    file("libs/x86_64/").mkdirs()
-    file("libs/x86/").mkdirs()
+    doFirst {
+        file("libs/armeabi-v7a/").mkdirs()
+        file("libs/arm64-v8a/").mkdirs()
+        file("libs/x86_64/").mkdirs()
+        file("libs/x86/").mkdirs()
 
-    configurations.natives.copy().files.each { jar ->
-      def outputDir = null
-      if (jar.name.endsWith("natives-armeabi-v7a.jar")) outputDir = file("libs/armeabi-v7a")
-      if (jar.name.endsWith("natives-arm64-v8a.jar")) outputDir = file("libs/arm64-v8a")
-      if (jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
-      if (jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
-      if (outputDir != null) {
-        copy {
-          from zipTree(jar)
-          into outputDir
-          include "*.so"
+        configurations.natives.copy().files.each { jar ->
+            def outputDir = null
+            if (jar.name.endsWith("natives-armeabi-v7a.jar")) outputDir = file("libs/armeabi-v7a")
+            if (jar.name.endsWith("natives-arm64-v8a.jar")) outputDir = file("libs/arm64-v8a")
+            if (jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
+            if (jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
+            if (outputDir != null) {
+                copy {
+                    from zipTree(jar)
+                    into outputDir
+                    include "*.so"
+                }
+            }
         }
-      }
     }
-  }
 }
 
 tasks.matching { it.name.contains("merge") && it.name.contains("JniLibFolders") }.configureEach { packageTask ->
-  packageTask.dependsOn 'copyAndroidNatives'
+    packageTask.dependsOn 'copyAndroidNatives'
 }
 
 tasks.register('run', Exec) {
-  dependsOn build
+    dependsOn build
 
-  def path
-  def localProperties = project.file("../local.properties")
-  if (localProperties.exists()) {
-    Properties properties = new Properties()
-    localProperties.withInputStream { instr ->
-      properties.load(instr)
-    }
-    def sdkDir = properties.getProperty('sdk.dir')
-    if (sdkDir) {
-      path = sdkDir
+    def path
+    def localProperties = project.file("../local.properties")
+    if (localProperties.exists()) {
+        Properties properties = new Properties()
+        localProperties.withInputStream { instr ->
+            properties.load(instr)
+        }
+        def sdkDir = properties.getProperty('sdk.dir')
+        if (sdkDir) {
+            path = sdkDir
+        } else {
+            path = "$System.env.ANDROID_SDK_ROOT"
+        }
     } else {
-      path = "$System.env.ANDROID_SDK_ROOT"
+        path = "$System.env.ANDROID_SDK_ROOT"
     }
-  } else {
-    path = "$System.env.ANDROID_SDK_ROOT"
-  }
 
-  def adb = path + "/platform-tools/adb"
-  commandLine "$adb", 'shell', 'am', 'start', '-n', 'dev.ultreon.quantum/dev.ultreon.quantum.android.AndroidLauncher'
+    def adb = path + "/platform-tools/adb"
+    commandLine "$adb", 'shell', 'am', 'start', '-n', 'dev.ultreon.quantum/dev.ultreon.quantum.android.AndroidLauncher'
 }
 
 eclipse.project.name = appName + "-android"

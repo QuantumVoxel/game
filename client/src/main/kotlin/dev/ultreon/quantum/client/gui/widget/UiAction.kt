@@ -1,5 +1,6 @@
 package dev.ultreon.quantum.client.gui.widget
 
+import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.utils.JsonValue
 import dev.ultreon.quantum.client.gui.screens.IdScreen
 import dev.ultreon.quantum.client.gui.screens.PlaceholderScreen
@@ -34,9 +35,30 @@ object UiAction {
         }
       }
 
+      "exit-world" -> {
+        return {
+          logger.info("Exiting world")
+          quantum.stopWorld {
+            Gdx.input.isCursorCatched = false
+            quantum.showScreen(IdScreen.get(id(path = "title")) ?: run {
+              logger.error("Title screen not found")
+              PlaceholderScreen
+            })
+          }
+        }
+      }
+
+      "connect-server" -> {
+        return {
+          logger.info("Connecting to server: ${json["server"].asString()}")
+          quantum.connect(json["server"].asString())
+        }
+      }
+
       "close-screen" -> {
         return {
           quantum.showScreen(if (quantum.dimension != null) {
+            Gdx.input.isCursorCatched = true
             PlaceholderScreen
           } else {
             IdScreen.get(id(path = "title")) ?: run {

@@ -170,7 +170,7 @@ class ResourceLeaf(val parent: ResourceDir, override val name: String) : Resourc
       resources.values.forEach { resources ->
         resources.forEach { res -> callback.call(CallContext().also {
           it.paramValues["resource"] = ContextValue(ContextType.resource, res)
-        }) }
+        }).get() }
       }
       null
     }

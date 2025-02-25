@@ -1,7 +1,7 @@
 package dev.ultreon.quantum.entity
 
 import com.badlogic.gdx.utils.JsonValue
-import dev.ultreon.quantum.scripting.json
+import dev.ultreon.quantum.scripting.`null`
 
 class InventoryComponent : Component<InventoryComponent>() {
   var hotbarIndex: Int = 0
@@ -11,8 +11,8 @@ class InventoryComponent : Component<InventoryComponent>() {
   override fun json(): JsonValue {
     return JsonValue(JsonValue.ValueType.`object`).also { json ->
       json.addChild("hotbarIndex", JsonValue(hotbarIndex.toLong()))
-      json.addChild("slots", slots.map { it.json() }.json())
-      json.addChild("hotbar", hotbar.map { it.json() }.json())
+      json.addChild("slots", slots.map { it.json() }.`null`())
+      json.addChild("hotbar", hotbar.map { it.json() }.`null`())
     }
   }
 

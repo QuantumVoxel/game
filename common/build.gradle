@@ -1,5 +1,4 @@
 plugins {
-    id "antlr"
 }
 
 apply plugin: 'org.jetbrains.kotlin.jvm'
@@ -14,14 +13,7 @@ if (JavaVersion.current().isJava9Compatible()) {
 eclipse.project.name = appName + '-common'
 
 compileKotlin {
-    dependsOn(generateGrammarSource)
-}
 
-generateGrammarSource {
-    maxHeapSize = "100m"
-    arguments += ["-visitor", "-long-messages"]
-    arguments += ["-package", "dev.ultreon.quantum.scripting.qfunc"]
-    outputDirectory = file("$projectDir/src/main/java/dev/ultreon/quantum/scripting/qfunc")
 }
 
 dependencies {
@@ -30,9 +22,6 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
 
 //  implementation "io.ktor:ktor-network:2.3.12"
-
-    antlr "org.antlr:antlr4:4.5" // use ANTLR version 4
-    api "org.antlr:antlr4-runtime:4.13.1" // use ANTLR version 4
 
     api "dev.ultreon.JNoiseJDK11:jnoise-core:a6507bcc7e", {
         exclude group: "org.jspecify", module: "jspecify"
@@ -66,24 +55,11 @@ dependencies {
 
     api "dev.ultreon:scriptic-lang:0.1-SNAPSHOT"
 
-    // Javet
-    implementation 'com.caoccao.javet:javet:4.1.1'
-    implementation 'com.caoccao.javet:javenode:0.8.0'
-
     implementation "org.jetbrains.kotlin:kotlin-reflect:2.1.0"
-
-//  api "net.sf.py4j:py4j:0.10.9.9"
-
-//  api 'io.socket:socket.io-client:2.1.1'
-//  api 'io.socket:socket.io-server:4.1.2'
-//  api("jakarta.servlet:jakarta.servlet-api:6.1.0")
-
-    // Javet
-//  implementation 'com.caoccao.javet:javet:4.1.1'
 }
 
 jar {
-    archiveBaseName.set(appName)
+    archiveBaseName.set("quantum-common")
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
     dependsOn configurations.runtimeClasspath
     doLast {

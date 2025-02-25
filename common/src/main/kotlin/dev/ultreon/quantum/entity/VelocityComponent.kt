@@ -1,7 +1,7 @@
 package dev.ultreon.quantum.entity
 
 import com.badlogic.gdx.utils.JsonValue
-import dev.ultreon.quantum.scripting.json
+import dev.ultreon.quantum.scripting.`null`
 
 class VelocityComponent : Component<VelocityComponent>() {
   var x = 0f
@@ -10,7 +10,7 @@ class VelocityComponent : Component<VelocityComponent>() {
 
   override val componentType = ComponentType.velocity
   override fun json(): JsonValue {
-    return null.json()
+    return `null`()
   }
 
   override fun load(json: JsonValue) {

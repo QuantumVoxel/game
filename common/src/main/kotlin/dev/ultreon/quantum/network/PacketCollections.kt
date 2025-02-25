@@ -1,5 +1,7 @@
 package dev.ultreon.quantum.network
 
+import com.badlogic.gdx.utils.JsonValue
+
 object PacketCollections {
   val handshake = PacketCollection("Handshake", 0) {
     registerServerEndpoint<ConnectionGuard> { connectionGuard, context -> connectionGuard.handle(context) }
@@ -22,12 +24,21 @@ data class ConnectionGuard(val question: Int) : Packet("ConnectionGuard") {
   override fun handle(context: PacketContext) {
     context.reply(ConnectionAnswer(question))
   }
+
+  override fun write(io: PacketIO) {
+    io.writeInt(question)
+  }
 }
 
 data class ConnectionAnswer(val answer: Int) : Packet("ConnectionAnswer") {
-
   override fun handle(context: PacketContext) {
-    context.reply(ConnectionResponse(answer % 64 == 0 && answer != 0))
+    context.reply(ConnectionResponse(answer % 64 == 0 && answer != 0)) {
+      context.moveStage(ConnectionStage.LOGIN)
+    }
+  }
+
+  override fun write(io: PacketIO) {
+    io.writeInt(answer)
   }
 }
 
@@ -35,5 +46,9 @@ data class ConnectionResponse(val accepted: Boolean) : Packet("ConnectionRespons
 
   override fun handle(context: PacketContext) {
     context.moveStage(ConnectionStage.LOGIN)
+  }
+
+  override fun write(io: PacketIO) {
+    io.writeBoolean(accepted)
   }
 }

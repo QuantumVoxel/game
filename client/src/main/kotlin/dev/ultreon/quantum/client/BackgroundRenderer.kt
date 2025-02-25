@@ -7,6 +7,7 @@ import dev.ultreon.quantum.blocks.Blocks
 import dev.ultreon.quantum.client.world.ClientChunk
 import dev.ultreon.quantum.client.world.ClientDimension
 import dev.ultreon.quantum.client.world.Skybox
+import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.math.Vector3D
 import dev.ultreon.quantum.util.NamespaceID
 import dev.ultreon.quantum.vec3d

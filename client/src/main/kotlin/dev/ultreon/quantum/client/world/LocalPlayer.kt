@@ -13,6 +13,10 @@ class LocalPlayer(override val name: String, val dimension: Dimension, position:
   override val connection: Connection
     get() = quantum.connection ?: error("No connection")
 
+  override fun messageReceived(message: String) {
+    quantum.chat.addMessage(message)
+  }
+
   fun createEntity() {
     EntityTemplate.player.createEntity(dimension).also {
       entity = it

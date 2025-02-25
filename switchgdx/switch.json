@@ -1,5 +1,5 @@
 {
-  "mainClass": "dev.ultreon.bubbles.switchgdx.SwitchLauncher",
+  "mainClass": "dev.ultreon.quantum.switchgdx.SwitchLauncher",
   "reflective": [
     "dev.ultreon.entity.**",
     "com.artemis.**"

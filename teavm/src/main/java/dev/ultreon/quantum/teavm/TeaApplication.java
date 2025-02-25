@@ -154,38 +154,42 @@ public class TeaApplication implements Application, Runnable {
         window.addEventListener("pagehide", new EventListenerWrapper() {
             @Override
             public void handleEvent(EventWrapper evt) {
-                if (appListener != null) {
-                    appListener.pause();
-                    appListener.dispose();
-                    appListener = null;
-                }
+                Gdx.app.postRunnable(() -> {
+                    if (appListener != null) {
+                        appListener.pause();
+                        appListener.dispose();
+                        appListener = null;
+                    }
+                });
             }
         });
 
         window.getDocument().addEventListener("visibilitychange", new EventListenerWrapper() {
             @Override
             public void handleEvent(EventWrapper evt) {
-                // notify of state change
-                if (initState == AppState.APP_LOOP) {
-                    String state = window.getDocument().getVisibilityState();
-                    if (state.equals("hidden")) {
-                        // hidden: i.e. we are paused
-                        synchronized (lifecycleListeners) {
-                            for (LifecycleListener listener : lifecycleListeners) {
-                                listener.pause();
+                Gdx.app.postRunnable(() -> {
+                    // notify of state change
+                    if (initState == AppState.APP_LOOP) {
+                        String state = window.getDocument().getVisibilityState();
+                        if (state.equals("hidden")) {
+                            // hidden: i.e. we are paused
+                            synchronized (lifecycleListeners) {
+                                for (LifecycleListener listener : lifecycleListeners) {
+                                    listener.pause();
+                                }
                             }
-                        }
-                        appListener.pause();
-                    } else if (state.equals("visible")) {
-                        // visible: i.e. we resume
-                        synchronized (lifecycleListeners) {
-                            for (LifecycleListener listener : lifecycleListeners) {
-                                listener.resume();
+                            appListener.pause();
+                        } else if (state.equals("visible")) {
+                            // visible: i.e. we resume
+                            synchronized (lifecycleListeners) {
+                                for (LifecycleListener listener : lifecycleListeners) {
+                                    listener.resume();
+                                }
                             }
+                            appListener.resume();
                         }
-                        appListener.resume();
                     }
-                }
+                });
             }
         });
 
@@ -193,16 +197,18 @@ public class TeaApplication implements Application, Runnable {
             window.addEventListener("resize", new EventListenerWrapper() {
                 @Override
                 public void handleEvent(EventWrapper evt) {
-                    int width = window.getClientWidth() - config.padHorizontal;
-                    int height = window.getClientHeight() - config.padVertical;
+                    Gdx.app.postRunnable(() -> {
+                        int width = window.getClientWidth() - config.padHorizontal;
+                        int height = window.getClientHeight() - config.padVertical;
 
-                    if (width <= 0 || height <= 0) {
-                        return;
-                    }
+                        if (width <= 0 || height <= 0) {
+                            return;
+                        }
 
-                    if (graphics != null) {
-                        graphics.setCanvasSize(width, height, config.usePhysicalPixels);
-                    }
+                        if (graphics != null) {
+                            graphics.setCanvasSize(width, height, config.usePhysicalPixels);
+                        }
+                    });
                 }
             });
         }

@@ -2,7 +2,7 @@ package dev.ultreon.quantum.client.scripting.cond
 
 import com.badlogic.gdx.utils.Os
 import com.badlogic.gdx.utils.SharedLibraryLoader
-import dev.ultreon.quantum.client.gamePlatform
+import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.scripting.condition.VirtualCondition
 
 object ClientConditions {

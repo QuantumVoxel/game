@@ -35,4 +35,6 @@ abstract class Player : Audience {
   override fun disconnect(reason: String) {
     connection.onDisconnect(reason)
   }
+
+  abstract fun messageReceived(message: String)
 }

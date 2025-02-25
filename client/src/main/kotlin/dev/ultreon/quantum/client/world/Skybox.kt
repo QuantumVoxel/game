@@ -8,7 +8,7 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.client.cube
-import dev.ultreon.quantum.client.gamePlatform
+import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.util.NamespaceID
 

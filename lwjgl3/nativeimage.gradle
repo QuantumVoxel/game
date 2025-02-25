@@ -68,6 +68,8 @@ project(":lwjgl3") {
     )
   }
 
+    nativeCompile.dependsOn(generateResourcesConfigFile)
+
 // Task to package the native image into a macOS .app bundle
   tasks.register("packageMacApp") {
     dependsOn nativeCompile

@@ -59,8 +59,6 @@ class JsonModel(
       modelElement.loadInto(i, faceCull, aoArray, x, y, z, builder, textureElements)
       i++
     }
-
-    yield()
   }
 
   fun load() {

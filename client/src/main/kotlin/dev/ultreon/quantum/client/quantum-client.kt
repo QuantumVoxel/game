@@ -22,7 +22,6 @@ import com.badlogic.gdx.utils.viewport.Viewport
 import com.github.tommyettinger.textra.Font
 import com.github.tommyettinger.textra.KnownFonts
 import dev.ultreon.quantum.*
-import dev.ultreon.quantum.blocks.Block
 import dev.ultreon.quantum.blocks.Blocks
 import dev.ultreon.quantum.blocks.PropertyKeys
 import dev.ultreon.quantum.client.debug.DebugRenderer
@@ -32,9 +31,9 @@ import dev.ultreon.quantum.client.gui.screens.Screen
 import dev.ultreon.quantum.client.input.*
 import dev.ultreon.quantum.client.model.JsonModelLoader
 import dev.ultreon.quantum.client.model.ModelRegistry
+import dev.ultreon.quantum.client.network.ClientBaseSocket
+import dev.ultreon.quantum.client.network.ClientConnection
 import dev.ultreon.quantum.client.scripting.ClientContextTypes
-import dev.ultreon.quantum.client.scripting.TSApi
-import dev.ultreon.quantum.client.scripting.TypescriptModule
 import dev.ultreon.quantum.client.scripting.cond.ClientConditions
 import dev.ultreon.quantum.client.texture.TextureManager
 import dev.ultreon.quantum.client.world.ClientDimension
@@ -46,19 +45,14 @@ import dev.ultreon.quantum.scripting.ContextType
 import dev.ultreon.quantum.scripting.ContextValue
 import dev.ultreon.quantum.scripting.PersistentData
 import dev.ultreon.quantum.scripting.function.function
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.util.NamespaceID
-import dev.ultreon.quantum.world.BlockFlags
-import dev.ultreon.quantum.world.Dimension
 import ktx.app.*
 import ktx.assets.disposeSafely
 import ktx.async.MainDispatcher
 import space.earlygrey.shapedrawer.ShapeDrawer
 import java.io.FileNotFoundException
-import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.ZipInputStream
-import kotlin.io.path.Path
 import kotlin.math.min
 
 const val MINIMUM_WIDTH = 550
@@ -66,8 +60,6 @@ const val MINIMUM_HEIGHT = 300
 
 const val TPS = 20
 const val SPT = 1F / TPS
-
-lateinit var gamePlatform: GamePlatform
 
 
 /**
@@ -88,11 +80,13 @@ lateinit var gamePlatform: GamePlatform
  * - The `render` method manages the drawing lifecycle, including handling and rendering crash details if any exception occurs.
  * - The `dispose` method cleans up resources and disposes of components safely when the game is terminated.
  */
-class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, TSApi, ContextAware<QuantumVoxel> {
+class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<QuantumVoxel> {
   init {
     instance = this
   }
 
+  var chunkQueue: Int = 0
+  val chat: ChatGui = ChatGui()
   var connection: Connection? = null
 
   //  private lateinit var gen: Gen
@@ -180,9 +174,14 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, TSApi, ContextAware
       Font(bitmapFont).also {
         KnownFonts.addEmoji(it, -36F, 16F, -4F)
       }
-    } catch (e: FileNotFoundException) {
-      logger.error("Failed to load font:\n${e.stackTraceToString()}")
-      Font(BitmapFont())
+    } catch (e: Throwable) {
+      try {
+        logger.error("Failed to load font:\n${e.stackTraceToString()}")
+        Font(BitmapFont())
+      } catch (e: Throwable) {
+        logger.error("Failed to load font:\n${e.stackTraceToString()}")
+        Font()
+      }
     }
   }
 
@@ -324,6 +323,8 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, TSApi, ContextAware
     environmentRenderer.disposeSafely()
     dimension.disposeSafely()
     world?.dispose()
+
+    Future.dispose()
 
     player = null
     dimension = null
@@ -476,19 +477,6 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, TSApi, ContextAware
     globalBatch.projectionMatrix.setToOrtho2D(0f, 0f, width.toFloat(), height.toFloat())
   }
 
-  operator fun <T> invoke(block: (QuantumVoxel) -> T): CompletableFuture<T> {
-    val completableFuture = CompletableFuture<T>()
-    Gdx.app.postRunnable {
-      try {
-        completableFuture.complete(block(this))
-      } catch (e: Exception) {
-        completableFuture.completeExceptionally(e)
-      }
-    }
-
-    return completableFuture
-  }
-
   fun showScreen(type: KtxScreen?) {
     if (this.screen == type) {
       return
@@ -521,23 +509,23 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, TSApi, ContextAware
   lateinit var guiViewport: Viewport
     private set
 
-  override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+  override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean = handleInput {
     val scr = screen
     if (scr is Screen) {
-      return scr.touchDown(screenX / guiScale, screenY / guiScale, pointer, button)
+      return@handleInput scr.touchDown(screenX / guiScale, screenY / guiScale, pointer, button)
     }
 
-    return super.touchDown(screenX, screenY, pointer, button)
+    return@handleInput super.touchDown(screenX, screenY, pointer, button)
   }
 
-  override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+  override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean = handleInput {
     val scr = screen
     var result = false
     if (scr is Screen) {
       result = result or scr.touchUp(screenX / guiScale, screenY / guiScale, pointer, button)
     }
 
-    return result or super.touchUp(screenX, screenY, pointer, button)
+    return@handleInput result or super.touchUp(screenX, screenY, pointer, button)
   }
 
   override val persistentData: PersistentData = PersistentData()
@@ -567,12 +555,26 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, TSApi, ContextAware
       "font" -> ContextValue(ClientContextTypes.font, quantum.font)
       "renderer" -> ContextValue(ClientContextTypes.guiRenderer, guiRenderer)
       "start_world" -> ContextValue(ContextType.function, vfStartWorld)
+      "resources" -> ContextValue(ContextType.resources, clientResources)
       else -> super.fieldOf(name, contextJson)
     }
   }
 
   override fun toString(): String {
     return "QuantumVoxel"
+  }
+
+  fun connect(asString: String?) {
+    if (asString == null) {
+      return
+    }
+
+    val createClientSocket = gamePlatform.createClientSocket(asString) as? ClientBaseSocket?
+    if (createClientSocket == null) {
+      logger.error("Failed to connect to $asString, maybe platform implementation is missing?")
+    } else {
+      connection = ClientConnection(this, createClientSocket)
+    }
   }
 
   companion object {
@@ -587,41 +589,34 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, TSApi, ContextAware
       get() = Thread.currentThread().id == mainThread.id
     lateinit var instance: QuantumVoxel
 
-    fun <T : Any?> await(function: () -> T): T {
-      if (isMainThread) {
-        return function()
-      }
-
-      var waiting = Optional.empty<AtomicReference<T>>()
-      quantum.submit {
-        waiting = Optional.of(AtomicReference(function()))
-      }
-
-      while (waiting.isEmpty) {
-        Thread.yield()
-      }
-
-      return waiting.get().get()
+    operator fun <T> invoke(function: () -> T): T {
+      return invokeAsync(function).get()
     }
 
-    @Deprecated("Use Quants instead")
-    fun registerApis(typescriptModule: TypescriptModule) {
-      typescriptModule.register("client") {
-        createType<QuantumVoxel>("Client")
-        createType<ClientDimension>("ClientDimension")
-        createType<Dimension>("Dimension")
-        createType<World>("World")
-        createType<LocalPlayer>("PlayerEntity")
-        createType<Camera>("Camera")
-        createType<ShapeDrawer>("Shapes")
-        createType<DebugRenderer>("DebugRenderer")
-        createType<EnvironmentRenderer>("EnvironmentRenderer")
-        createType<BackgroundRenderer>("BackgroundRenderer")
-        createType<GuiRenderer>("GuiRenderer")
-        createType<SpriteBatch>("SpriteBatch")
-        createType<Block>("Block")
-        createType<BlockFlags>("BlockFlags")
+    fun <T> invokeAsync(function: () -> T): Future<T> {
+      if (isMainThread && !gamePlatform.isWeb) {
+        return Future.completed(function())
       }
+
+      val future = Future<T>()
+
+      quantum.submit {
+        try {
+          future.complete(function())
+        } catch (e: Throwable) {
+          future.completeExceptionally(e)
+        }
+      }
+
+      return future
+    }
+
+    fun handleInput(function: () -> Boolean): Boolean {
+      invokeAsync {
+        function()
+      }
+
+      return true
     }
   }
 }

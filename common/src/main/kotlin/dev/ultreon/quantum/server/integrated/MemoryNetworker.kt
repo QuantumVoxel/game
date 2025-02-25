@@ -6,4 +6,8 @@ class MemoryNetworker : Networker {
   override fun init() {
 
   }
+
+  override fun close() {
+    TODO("Not yet implemented")
+  }
 }

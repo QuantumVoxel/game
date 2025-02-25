@@ -1,5 +1,6 @@
 package dev.ultreon.quantum
 
+import com.badlogic.gdx.utils.Json
 import dev.ultreon.quantum.blocks.Block
 import dev.ultreon.quantum.blocks.Blocks
 import dev.ultreon.quantum.event.commonEvents
@@ -13,6 +14,7 @@ import dev.ultreon.quantum.resource.ResourceManager
 import dev.ultreon.quantum.util.NamespaceID
 
 val logger = LoggerFactory["QuantumVoxel"]
+val json: Json = Json()
 
 val Block.id: NamespaceID
   get() = Registries.blocks[this] ?: throw NoSuchElementException("Block not registered: $this")
