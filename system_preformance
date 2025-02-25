@@ -20,7 +20,8 @@ GPU:m1 (7 cores)
 opengl: 4.6
 Status:dosent launch
 fps:n/a
-Version:
+error: Error: Could not find or load main class lib.artemis-odb-2.3.0.jar(mac os)
+Version:0.04
 
 
 toshiba nb305 
@@ -31,6 +32,5 @@ GPU: Intel GMA 3150
 opengl:2.0 (wont launch beacuse of gl problelms idk why)
 Status: not launching 
 fps:n/a
-Version:
-// needs completi
-mabye some more preformance metrics
+Version:0.01
+//mabye some more preformance metrics
