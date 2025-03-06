@@ -1,5 +1,8 @@
 package dev.ultreon.quantum.network
 
+import dev.ultreon.quantum.ExperimentalApi
+
+@ExperimentalApi
 abstract class PacketContext {
   protected val connection: Connection? = null
 

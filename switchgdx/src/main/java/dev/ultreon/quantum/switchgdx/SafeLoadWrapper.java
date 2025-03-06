@@ -9,6 +9,9 @@ import dev.ultreon.quantum.GamePlatformKt;
 import dev.ultreon.quantum.LoggingKt;
 import dev.ultreon.quantum.client.QuantumVoxel;
 
+/**
+ * A safe wrapper for the Quantum Voxel game.
+ */
 public class SafeLoadWrapper implements ApplicationListener {
     private QuantumVoxel quantum;
     private SpriteBatch batch;

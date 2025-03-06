@@ -1,4 +1,4 @@
-package dev.ultreon.quantum.server
+package dev.ultreon.quantum.dedicated
 
 import dev.ultreon.quantum.async.AsyncExecutor
 import dev.ultreon.quantum.async.Future

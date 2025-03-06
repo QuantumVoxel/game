@@ -1,8 +1,8 @@
-@file:OptIn(ExperimentalQuantumApi::class)
+@file:OptIn(ExperimentalApi::class)
 
 package dev.ultreon.quantum.server
 
-import dev.ultreon.quantum.ExperimentalQuantumApi
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.blocks.Block
 import dev.ultreon.quantum.blocks.Blocks
 import dev.ultreon.quantum.math.Vector3D

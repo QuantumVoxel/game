@@ -1,9 +1,11 @@
 package dev.ultreon.quantum.network.packets
 
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.network.Packet
 import dev.ultreon.quantum.network.PacketContext
 import dev.ultreon.quantum.network.PacketIO
 
+@ExperimentalApi
 data class ChatPacket(val message: String) : Packet("chat") {
   override fun handle(context: PacketContext) {
     context.player.messageReceived(message)

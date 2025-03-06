@@ -7,6 +7,14 @@ import dev.ultreon.quantum.client.QuantumVoxel
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.util.NamespaceID
 
+/**
+ * A renderer for GUIs.
+ *
+ * @param batch The sprite batch to render with.
+ * @property font The font to render text with.
+ * @constructor Creates a new GUI renderer with the specified parameters.
+ * @see SpriteBatch
+ */
 class GuiRenderer(private val batch: SpriteBatch) {
   val font = QuantumVoxel.instance.font
 
@@ -53,6 +61,15 @@ class GuiRenderer(private val batch: SpriteBatch) {
     blit(texture, x, y, width, height, u, v, uSize, vSize, texWidth, texHeight)
   }
 
+  /**
+   * Draws a texture at the specified position with the specified size.
+   *
+   * @param texture The texture to draw.
+   * @param x The x-coordinate of the texture.
+   * @param y The y-coordinate of the texture.
+   * @param width The width of the texture.
+   * @param height The height of the texture.
+   */
   fun drawTexture(
     texture: NamespaceID,
     x: Float,
@@ -76,6 +93,17 @@ class GuiRenderer(private val batch: SpriteBatch) {
     )
   }
 
+  /**
+   * Draws a texture at the specified position with the specified size.
+   *
+   * @param texture The texture to draw.
+   * @param x The x-coordinate of the texture.
+   * @param y The y-coordinate of the texture.
+   * @param width The width of the texture.
+   * @param height The height of the texture.
+   * @param texWidth The width of the texture.
+   * @param texHeight The height of the texture.
+   */
   fun drawTexture(
     texture: NamespaceID,
     x: Float,
@@ -88,6 +116,19 @@ class GuiRenderer(private val batch: SpriteBatch) {
     drawTexture(quantum.textureManager[texture], x, y, width, height, 0F, 0F, width, height, texWidth, texHeight)
   }
 
+  /**
+   * Draws a texture at the specified position with the specified size.
+   *
+   * @param texture The texture to draw.
+   * @param x The x-coordinate of the texture.
+   * @param y The y-coordinate of the texture.
+   * @param width The width of the texture.
+   * @param height The height of the texture.
+   * @param u The u-coordinate of the texture.
+   * @param v The v-coordinate of the texture.
+   * @param texWidth The width of the texture.
+   * @param texHeight The height of the texture.
+   */
   fun drawTexture(
     texture: NamespaceID,
     x: Float,
@@ -102,6 +143,21 @@ class GuiRenderer(private val batch: SpriteBatch) {
     drawTexture(quantum.textureManager[texture], x, y, width, height, u, v, width, height, texWidth, texHeight)
   }
 
+  /**
+   * Draws a texture at the specified position with the specified size.
+   *
+   * @param texture The texture to draw.
+   * @param x The x-coordinate of the texture.
+   * @param y The y-coordinate of the texture.
+   * @param width The width of the texture.
+   * @param height The height of the texture.
+   * @param u The x of the texture's UV.
+   * @param v The y of the texture's UV.
+   * @param uSize The width of the texture's UV.
+   * @param vSize The height of the texture's UV.
+   * @param texWidth The width of the texture.
+   * @param texHeight The height of the texture.
+   */
   fun drawTexture(
     texture: NamespaceID,
     x: Float,
@@ -118,42 +174,100 @@ class GuiRenderer(private val batch: SpriteBatch) {
     drawTexture(quantum.textureManager[texture], x, y, width, height, u, v, uSize, vSize, texWidth, texHeight)
   }
 
+  /**
+   * Draws text at the specified position.
+   *
+   * @param text The text to draw.
+   * @param x The x-coordinate of the text.
+   * @param y The y-coordinate of the text.
+   */
   fun drawText(text: String, x: Float, y: Float) {
     font.drawMarkupText(batch, text, x, y)
   }
 
+  /**
+   * Draws text at the specified position.
+   *
+   * @param layout The layout of the text.
+   * @param x The x-coordinate of the text.
+   * @param y The y-coordinate of the text.
+   */
   fun drawText(layout: Layout, x: Float, y: Float) {
     font.drawGlyphs(batch, layout, x, y)
   }
 
+  /**
+   * Calculates the width of the text.
+   *
+   * @param text The text to calculate the width of.
+   * @return The width of the text.
+   */
   fun textWidth(text: String): Float {
     layout.reset()
     return font.markup(text, layout).let { layout.width }
   }
 
+  /**
+   * Calculates the height of the text.
+   *
+   * @param text The text to calculate the height of.
+   * @return The height of the text.
+   */
   fun textHeight(text: String): Float {
     layout.reset()
     return font.markup(text, layout).let { layout.height }
   }
 
+  /**
+   * Begins drawing.
+   */
   fun begin() {
     batch.begin()
   }
 
+  /**
+   * Ends drawing.
+   */
   fun end() {
     batch.end()
   }
 
+  /**
+   * Disposes the GUI renderer and its resources.
+   */
   fun dispose() {
     batch.dispose()
   }
 
-  fun use(block: (GuiRenderer) -> Unit) {
+  /**
+   * Uses the GUI renderer in a block.
+   *
+   * @param block The block to use the GUI renderer in.
+   * @param T The return type of the [block].
+   * @return The value returned by the [block].
+   */
+  fun <T : Any> use(block: (GuiRenderer) -> T): T {
     begin()
-    block(this)
+    val ret = block(this)
     end()
+    return ret
   }
 
+  /**
+   * Draws a nine-patch at the specified position with the specified size.
+   *
+   * @param texture The texture to draw.
+   * @param leftInset The left inset of the nine-patch.
+   * @param topInset The top inset of the nine-patch.
+   * @param rightInset The right inset of the nine-patch.
+   * @param bottomInset The bottom inset of the nine-patch.
+   * @param x The x-coordinate of the nine-patch.
+   * @param y The y-coordinate of the nine-patch.
+   * @param width The width of the nine-patch.
+   * @param height The height of the nine-patch.
+   * @param texWidth The width of the texture.
+   * @param texHeight The height of the texture.
+   */
   private fun drawNinePatch(
     texture: TextureRegion,
     leftInset: Float,
@@ -301,6 +415,18 @@ class GuiRenderer(private val batch: SpriteBatch) {
     }
   }
 
+  /**
+   * Draws a nine-patch at the specified position with the specified size.
+   *
+   * @param texture The texture to draw.
+   * @param inset The inset of the nine-patch.
+   * @param x The x-coordinate of the nine-patch.
+   * @param y The y-coordinate of the nine-patch.
+   * @param width The width of the nine-patch.
+   * @param height The height of the nine-patch.
+   * @param texWidth The width of the texture.
+   * @param texHeight The height of the texture.
+   */
   fun drawNinePatch(
     texture: NamespaceID,
     inset: Float,
@@ -315,6 +441,21 @@ class GuiRenderer(private val batch: SpriteBatch) {
     drawNinePatch(textureRegion, inset, inset, inset, inset, x, y - height, width, height, texWidth, texHeight)
   }
 
+  /**
+   * Draws a nine-patch at the specified position with the specified size.
+   *
+   * @param texture The texture to draw.
+   * @param leftInset The left inset of the nine-patch.
+   * @param topInset The top inset of the nine-patch.
+   * @param rightInset The right inset of the nine-patch.
+   * @param bottomInset The bottom inset of the nine-patch.
+   * @param x The x-coordinate of the nine-patch.
+   * @param y The y-coordinate of the nine-patch.
+   * @param width The width of the nine-patch.
+   * @param height The height of the nine-patch.
+   * @param texWidth The width of the texture.
+   * @param texHeight The height of the texture.
+   */
   fun drawNinePatch(
     texture: NamespaceID,
     leftInset: Float,

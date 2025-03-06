@@ -46,12 +46,15 @@ import dev.ultreon.quantum.scripting.ContextValue
 import dev.ultreon.quantum.scripting.PersistentData
 import dev.ultreon.quantum.scripting.function.function
 import dev.ultreon.quantum.async.Future
+import dev.ultreon.quantum.client.gui.screens.Text
+import dev.ultreon.quantum.client.gui.screens.TextButton
+import dev.ultreon.quantum.client.gui.widget.GuiContainer
+import dev.ultreon.quantum.network.ConnectionStage
 import dev.ultreon.quantum.util.NamespaceID
 import ktx.app.*
 import ktx.assets.disposeSafely
 import ktx.async.MainDispatcher
 import space.earlygrey.shapedrawer.ShapeDrawer
-import java.io.FileNotFoundException
 import java.util.zip.ZipInputStream
 import kotlin.math.min
 
@@ -63,22 +66,55 @@ const val SPT = 1F / TPS
 
 
 /**
- * The `QuantumVoxel` object represents the main entry point for the Quantum Voxel application.
+ * The [QuantumVoxel] object represents the main entry point for the Quantum Voxel application.
  * It extends the [KtxGame] class, managing the lifecycle of the game, including initialization,
  * rendering, and resource management.
  *
  * Functionality:
- * - Manages game screens, world instance, and resources.
- * - Initializes and loads resources such as textures, shaders, and models.
+ * - Manages [Screen], [World], and [ClientConnection] instances.
+ * - Initializes and loads resources using managers like [TextureManager], [ResourceManager], and [JsonModelLoader].
  * - Handles application crashes by displaying the crash stack trace on the screen.
  * - Provides access to core components like the [clientResources], [jsonModelLoader], [textureManager],
  *   and the game [world].
  *
  * Lifecycle:
- * - The `create` method initializes the game environment, including graphics, texture management,
+ * - The [create] method initializes the game environment, including graphics, texture management,
  *   resource loading, and sets up the initial screen.
- * - The `render` method manages the drawing lifecycle, including handling and rendering crash details if any exception occurs.
- * - The `dispose` method cleans up resources and disposes of components safely when the game is terminated.
+ * - The [render] method manages the drawing lifecycle,
+ *   including handling and rendering crash details if any exception occurs.
+ * - The [dispose] method cleans up resources and disposes of components safely when the game is terminated.
+ *
+ * @property instance The singleton instance of the [QuantumVoxel] class.
+ * @property screen The current screen instance.
+ * @property world The main game world.
+ * @property modelBatch The model batch used for rendering 3D models in the game world.
+ * @property font The font used for rendering text in the game world.
+ * @property spriteBatch The sprite batch used for rendering 2D elements in the game world.
+ * @property shapes The shape drawer used for rendering shapes in the game world.
+ * @property textureManager The texture manager used for managing textures in the game world.
+ * @property clientResources The resource manager used for managing resources in the game world.
+ * @property jsonModelLoader The JSON model loader used for loading models in the game world.
+ * @property gameInput The game input manager used for handling user input in the game world.
+ * @property guiCam The GUI camera used for rendering GUI elements in the game world.
+ * @property guiViewport The GUI viewport used for rendering GUI elements in the game world.
+ * @property isTouch A flag indicating whether the game is running on a touch-enabled device.
+ * @property guiScale The GUI scale factor used for rendering GUI elements in the game world.
+ * @property backgroundRenderer The background renderer used for rendering the game world background.
+ * @property environmentRenderer The environment renderer used for rendering the game world environment.
+ * @property debug A flag indicating whether debug mode is enabled in the game world.
+ * @property debugRenderer The debug renderer used for rendering debug information in the game world.
+ * @property player The local player instance in the game world.
+ * @property dimension The client dimension instance in the game world.
+ * @property globalBatch The global sprite batch used for rendering 2D elements in the game world.
+ * @property executor The async executor used for running asynchronous tasks in the game world.
+ * @property bitmapFont The bitmap font used for rendering text in the game world.
+ * @property font The font used for rendering text in the game world.
+ * @property chat The chat GUI used for displaying chat messages in the game world.
+ * @property connection The client connection instance used for connecting to a server in the game world.
+ * @property chunkQueue The number of chunks to be loaded in the game world.
+ * @property setGuiScale The GUI scale factor used for rendering GUI elements in the game world.
+ *
+ * @constructor Creates a new instance of the [QuantumVoxel] class.
  */
 class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<QuantumVoxel> {
   init {
@@ -97,9 +133,14 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
 
   // Movement
   lateinit var keyMovement: KeyMovement
-  lateinit var touchMovement: TouchMovement
   lateinit var controllerMovement: ControllerMovement
+
+  @Deprecated("Use keyMovement instead", ReplaceWith("keyMovement"), DeprecationLevel.ERROR)
+  lateinit var touchMovement: TouchMovement
+
   var movement: PlayerMovement = KeyMovement()
+
+  @Deprecated("Not used anymore", level = DeprecationLevel.ERROR)
   lateinit var touchpad: Touchpad
 
   var backgroundRenderer: BackgroundRenderer? = null
@@ -224,6 +265,8 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     })
     Gdx.graphics.setVSync(false)
 
+    registerWidgets()
+
     width = Gdx.graphics.width.coerceAtLeast(MINIMUM_WIDTH)
     height = Gdx.graphics.height.coerceAtLeast(MINIMUM_HEIGHT)
 
@@ -272,6 +315,12 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     logger.debug("Quantum Voxel started!", this)
   }
 
+  private fun registerWidgets() {
+    WidgetFactories.register { Text(it) }
+    WidgetFactories.register { TextButton(it) }
+    WidgetFactories.register { GuiContainer(it) }
+  }
+
   fun startWorld() {
 //    world = World()
 
@@ -314,7 +363,10 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
   }
 
   /**
-   * Releases all resources associated with this instance to prevent memory leaks.
+   * Frees all resources tied to this instance to avoid memory leaks.
+   * This function runs when the app is closed or stopped.
+   *
+   * The [disposeSafely] method is used to safely dispose of objects.
    */
   override fun dispose() {
     super.dispose()
@@ -337,13 +389,19 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
   }
 
   /**
-   * Renders the application frame, handling both normal operation and crash scenarios.
+   * Draws the application frame, handling both normal operation and crash scenarios.
    *
    * If a crash exception is present, the method clears the screen, switches to a crash rendering mode,
-   * and outputs the stack trace of the exception to the screen for debugging purposes.
+   * and prints the stack trace of the exception to the screen for debugging purposes.
    *
-   * In the normal operation case (no crash), the method delegates rendering to the superclass implementation.
+   * In the normal operation case (no crash), it does the normal rendering process.
+   *
+   * @see EnvironmentRenderer
+   * @see PlaceholderScreen
+   * @see DebugRenderer
+   * @see GameInput
    */
+  @OptIn(InternalApi::class)
   override fun render() {
     clearScreen(0f, 0f, 0f, 1f)
 
@@ -402,15 +460,13 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     try {
       globalBatch.transformMatrix.scale(guiScale, guiScale, 1f)
       guiRenderer.use {
-        screen?.render(Gdx.graphics.deltaTime)
+        screen?.render(Gdx.graphics.deltaTime)!!
       }
 
       this.debugRenderer.render()
     } finally {
       globalBatch.transformMatrix = tmpTransform.cpy()
     }
-
-    gamePlatform.nextFrame()
   }
 
   private fun doTick() {
@@ -452,6 +508,16 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     get() =
       (if (setGuiScale <= 0) calcMaxGuiScale() else setGuiScale.coerceAtMost(calcMaxGuiScale())).toFloat()
 
+  /**
+   * Resize event handler for the application.
+   * This method is called when the application window is resized.
+   *
+   * NOTE: This method is marked as internal and should not be called directly.
+   *
+   * @param width The new width of the application window.
+   * @param height The new height of the application window.
+   */
+  @InternalApi
   override fun resize(width: Int, height: Int) {
     if (!loaded) {
       this.deferResize = true
@@ -477,8 +543,14 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     globalBatch.projectionMatrix.setToOrtho2D(0f, 0f, width.toFloat(), height.toFloat())
   }
 
-  fun showScreen(type: KtxScreen?) {
-    if (this.screen == type) {
+  /**
+   * Shows the specified screen, hiding the current screen if necessary.
+   * The method triggers the [Screen.show] and [Screen.hide] lifecycle events for the screens involved.
+   *
+   * @param screen The screen to show. Hiding the current screen if necessary.
+   */
+  fun showScreen(screen: KtxScreen?) {
+    if (this.screen == screen) {
       return
     }
 
@@ -486,14 +558,14 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
       ?.callSync(
         "client" to ContextValue(ClientContextTypes.client, this),
         "old_screen" to ContextValue(ClientContextTypes.screen, this.screen ?: PlaceholderScreen),
-        "screen" to ContextValue(ClientContextTypes.screen, type ?: PlaceholderScreen)
+        "screen" to ContextValue(ClientContextTypes.screen, screen ?: PlaceholderScreen)
       )
 
 
     this.screen?.hide()
-    this.screen = type
+    this.screen = screen
 
-    type?.show()
+    screen?.show()
   }
 
   fun submit(function: () -> Unit) {
@@ -509,6 +581,7 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
   lateinit var guiViewport: Viewport
     private set
 
+  @InternalApi
   override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean = handleInput {
     val scr = screen
     if (scr is Screen) {
@@ -518,6 +591,7 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     return@handleInput super.touchDown(screenX, screenY, pointer, button)
   }
 
+  @InternalApi
   override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean = handleInput {
     val scr = screen
     var result = false
@@ -564,17 +638,10 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     return "QuantumVoxel"
   }
 
-  fun connect(asString: String?) {
-    if (asString == null) {
-      return
-    }
-
-    val createClientSocket = gamePlatform.createClientSocket(asString) as? ClientBaseSocket?
-    if (createClientSocket == null) {
-      logger.error("Failed to connect to $asString, maybe platform implementation is missing?")
-    } else {
-      connection = ClientConnection(this, createClientSocket)
-    }
+  @ExperimentalApi
+  fun connect(address: String) {
+    val createClientSocket = ClientSocket(address, ConnectionStage.HANDSHAKE)
+    connection = ClientConnection(this, createClientSocket)
   }
 
   companion object {
@@ -621,25 +688,91 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
   }
 }
 
+/**
+ * Reference to the QuantumVoxel instance
+ */
 val quantum get() = QuantumVoxel.instance
+
+/**
+ * Reference to the sprite batch used for rendering 2D elements in the game world.
+ */
 val shapes get() = quantum.shapes
+
+/**
+ * Reference to the texture manager used for managing textures in the game world.
+ */
 val textureManager get() = quantum.textureManager
+
+/**
+ * Reference to the input manager used for handling user input in the game world.
+ */
 val gameInput get() = quantum.gameInput
+
+/**
+ * Reference to the GUI camera used for rendering GUI elements in the game world.
+ */
 val guiCam get() = quantum.guiCam
+
+/**
+ * Reference to the GUI viewport used for rendering GUI elements in the game world.
+ */
 val guiViewport get() = quantum.guiViewport
+
+/**
+ * Whether the game is running on a touch-enabled device
+ */
 val isTouch get() = quantum.isTouch
+
+/**
+ * Reference to the GUI scale factor
+ */
 val guiScale get() = quantum.guiScale
+
+/**
+ * Reference to the background renderer used for rendering the title screen background.
+ */
 var backgroundRenderer
   get() = quantum.backgroundRenderer
   set(value) {
     quantum.backgroundRenderer = value
   }
+
+/**
+ * Reference to the environment renderer used for rendering the game world environment.
+ */
 val environmentRenderer get() = quantum.environmentRenderer
+
+/**
+ * Flag indicating whether debug mode is enabled.
+ */
 val debug get() = quantum.debug
+
+/**
+ * Reference to the debug renderer used for rendering debug information.
+ */
 val debugRenderer get() = quantum.debugRenderer
+
+/**
+ * Reference to the player entity in the game world.
+ */
 val player get() = quantum.player
+
+/**
+ * Reference to the game world.
+ */
 val world get() = quantum.world
+
+/**
+ * Reference to the current dimension.
+ */
 val dimension get() = quantum.dimension
+
+/**
+ * Reference to the global sprite batch used for rendering 2D elements in the game world.
+ */
 val globalBatch get() = quantum.globalBatch
 
-//val clientEventBus = EventBus()
+/**
+ * Reference to the font used for rendering text in the game world.
+ */
+val font get() = quantum.font

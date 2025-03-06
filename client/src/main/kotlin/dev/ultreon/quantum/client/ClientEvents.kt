@@ -6,6 +6,9 @@ import dev.ultreon.quantum.event.EventRegistry
 import dev.ultreon.quantum.scripting.ContextParam
 import dev.ultreon.quantum.scripting.ContextType
 
+/**
+ * Event registry for client-side events
+ */
 val clientEvents = EventRegistry(quantum.clientResources).apply {
   register(
     Event(

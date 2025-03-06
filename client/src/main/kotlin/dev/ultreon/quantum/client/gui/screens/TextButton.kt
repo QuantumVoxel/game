@@ -68,17 +68,19 @@ enum class ButtonType {
   }
 }
 
-class TextButton(parent: GuiContainer?, widget: JsonValue, val type: ButtonType = ButtonType.Normal) : Widget(parent, widget) {
-  private val enabled: Boolean = widget["enabled"]?.asBoolean() ?: true
-  private val textAlignment: Float = when (widget["text-alignment"]?.asString()) {
-    "left" -> 0.0F
-    "center" -> 0.5F
-    "right" -> 1.0F
-    else -> 0.5F
-  }
-  private var textLabel: Layout = Layout()
+class TextButton : Widget {
+  val type: ButtonType
 
-  init {
+  constructor(parent: GuiContainer?, widget: JsonValue, type: ButtonType = ButtonType.Normal) : super(parent, widget) {
+    this.type = type
+    this.enabled = widget["enabled"]?.asBoolean() ?: true
+    this.textAlignment = when (widget["text-alignment"]?.asString()) {
+      "left" -> 0.0F
+      "center" -> 0.5F
+      "right" -> 1.0F
+      else -> 0.5F
+    }
+    this.textLabel = Layout()
     val text = widget["text"]?.asString() ?: "..."
     var color = widget["appearance"]?.run { this["color"]?.asString() ?: "#ffffff" } ?: "#ffffff"
     var size = widget["size"]?.let {
@@ -92,23 +94,39 @@ class TextButton(parent: GuiContainer?, widget: JsonValue, val type: ButtonType 
         null
       }
     } ?: intArrayOf(21, 21)
-
     if (size.isEmpty()) {
       size = intArrayOf(21, 21)
     } else if (size.size == 1) {
       size = intArrayOf(size[0], size[0])
     }
-
     width = size[0].toFloat()
     height = size[1].toFloat()
-
     if (!color.matches(Regex("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"))) {
       logger.error("Invalid color: $color")
       color = "#ffffff"
     }
-
-    quantum.font.markup("[$color]$text", textLabel)
+    this.text = "[$color]$text"
   }
+
+  constructor(parent: GuiContainer?, type: ButtonType = ButtonType.Normal) : super(parent) {
+    this.type = type
+    this.enabled = true
+    this.textAlignment = 0.5F
+    this.textLabel = Layout()
+    this.width = 21F
+    this.height = 21F
+    quantum.font.markup("...", textLabel)
+  }
+
+  private val enabled: Boolean
+  private val textAlignment: Float
+  private var textLabel: Layout
+
+  var text: String = ""
+    set(value) {
+      quantum.font.markup(value, textLabel)
+      field = value
+    }
 
   override fun render(renderer: GuiRenderer, mouseX: Int, mouseY: Int, delta: Float) {
     renderer.drawNinePatch(

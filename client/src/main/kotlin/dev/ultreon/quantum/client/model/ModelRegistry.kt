@@ -16,7 +16,8 @@ import dev.ultreon.quantum.util.NamespaceID
 object ModelRegistry : Disposable {
   private val blockModels = mutableMapOf<Block, JsonModel>()
   private val itemModels = mutableMapOf<Item, JsonModel>()
-  private val _fallbackModel: JsonModel = quantum.jsonModelLoader.load(
+  private val _fallbackModel: JsonModel by lazy {
+    quantum.jsonModelLoader.load(
     ResourceId.of(RegistryKeys.blocks, NamespaceID.of(path = "error")), JsonReader().parse("""
     {
       "parent": "quantum:base/cube",
@@ -39,6 +40,7 @@ object ModelRegistry : Disposable {
       ]
     }
     """.trimIndent()))
+  }
 
   val fallbackModel: JsonModel
     get() = _fallbackModel

@@ -1,8 +1,17 @@
 package dev.ultreon.quantum.network
 
-import dev.ultreon.quantum.ExperimentalQuantumApi
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.entity.Entity
 
+/**
+ * Represents a player on the server.
+ *
+ * @property entity The entity.
+ * @property name The name of the player.
+ * @property connection The connection of the player.
+ *
+ * @constructor Creates a new player.
+ */
 abstract class Player : Audience {
   abstract val entity: Entity?
   abstract val name: String
@@ -27,7 +36,7 @@ abstract class Player : Audience {
     connection.sendPacket(packet, callback)
   }
 
-  @ExperimentalQuantumApi
+  @ExperimentalApi
   override fun sendMessage(message: String) {
     // TODO
   }

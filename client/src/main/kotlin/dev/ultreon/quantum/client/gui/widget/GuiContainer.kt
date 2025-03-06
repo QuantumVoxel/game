@@ -1,5 +1,7 @@
 package dev.ultreon.quantum.client.gui.widget
 
+import dev.ultreon.quantum.InternalApi
+import dev.ultreon.quantum.client.WidgetFactories
 import dev.ultreon.quantum.client.gui.GuiRenderer
 import dev.ultreon.quantum.client.gui.screens.Screen
 import dev.ultreon.quantum.logger
@@ -8,6 +10,12 @@ open class GuiContainer(parent: GuiContainer?) : Widget(parent) {
   private val children = mutableListOf<Widget>()
   val widgets: MutableMap<String, Widget> = mutableMapOf()
 
+  @OptIn(InternalApi::class)
+  inline fun <reified T : Widget> add(block: T.() -> Unit): T {
+    return add(WidgetFactories.create<T>(this).apply(block))
+  }
+
+  @InternalApi
   fun <T : Widget> add(widget: T): T {
     if (widget.id in widgets) {
       logger.warn("Duplicate widget id in container: ${widget.id}")

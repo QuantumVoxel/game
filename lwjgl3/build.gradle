@@ -94,6 +94,9 @@ run {
     workingDir = rootProject.file('run').path
     setIgnoreExitValue(false)
 
+    classpath = project(":gameprovider").sourceSets.main.runtimeClasspath
+    mainClass = "net.fabricmc.loader.impl.launch.knot.KnotClient"
+
 //  jvmArgs += "-agentlib:native-image-agent=config-output-dir=./config."
 
     if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"

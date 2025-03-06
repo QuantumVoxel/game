@@ -1,10 +1,10 @@
-import dev.ultreon.quantum.ExperimentalQuantumApi
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.server.PaletteStorage
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class Test1 {
-  @OptIn(ExperimentalQuantumApi::class)
+  @OptIn(ExperimentalApi::class)
   @Test
   fun test1() {
     // Test creating a map with maximum size

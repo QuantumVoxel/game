@@ -1,7 +1,9 @@
 package dev.ultreon.quantum.server.integrated
 
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.server.QuantumVoxelServer
 
+@ExperimentalApi
 class IntegratedServer : QuantumVoxelServer() {
   override val isDedicatedServer = false
   override fun create() {

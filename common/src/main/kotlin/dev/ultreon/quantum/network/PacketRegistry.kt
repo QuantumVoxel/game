@@ -1,8 +1,10 @@
 package dev.ultreon.quantum.network
 
+import dev.ultreon.quantum.ExperimentalApi
 import java.io.IOException
 import kotlin.reflect.KClass
 
+@ExperimentalApi
 class PacketRegistry {
   val decoders = mutableMapOf<Int, PacketDecoder<*>>()
   val encoders = mutableMapOf<Int, PacketEncoder<*>>()

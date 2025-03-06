@@ -14,15 +14,15 @@ interface WidgetPositioning {
       }
     }
 
-    fun relativeToWidget(widget: Widget, relativeX: Float, relativeY: Float): WidgetPositioning {
+    fun relativeToWidget(widget: Widget, relativeX: Float = 0f, relativeY: Float = 0f): WidgetPositioning {
       return object : WidgetPositioning {
         override fun getPosition(screen: Screen, x: Float, y: Float, width: Float, height: Float): Pair<Float, Float> {
-          return (widget.x ?: 0F) + relativeX to (widget.y ?: 0F) + relativeY
+          return widget.x + relativeX to widget.y + relativeY
         }
       }
     }
 
-    fun relativeToParent(relativeX: Float, relativeY: Float): WidgetPositioning {
+    fun relativeToParent(relativeX: Float = 0f, relativeY: Float = 0f): WidgetPositioning {
       return object : WidgetPositioning {
         override fun getPosition(screen: Screen, x: Float, y: Float, width: Float, height: Float): Pair<Float, Float> {
           return x + relativeX to y + relativeY
@@ -30,7 +30,7 @@ interface WidgetPositioning {
       }
     }
 
-    fun relativeToScreen(relativeX: Float, relativeY: Float): WidgetPositioning {
+    fun relativeToScreen(relativeX: Float = 0f, relativeY: Float = 0f): WidgetPositioning {
       return object : WidgetPositioning {
         override fun getPosition(screen: Screen, x: Float, y: Float, width: Float, height: Float): Pair<Float, Float> {
           return screen.x + relativeX to screen.y + relativeY
@@ -38,7 +38,7 @@ interface WidgetPositioning {
       }
     }
 
-    fun relativeToScreenTop(relativeX: Float, relativeY: Float): WidgetPositioning {
+    fun relativeToScreenTop(relativeX: Float = 0f, relativeY: Float = 0f): WidgetPositioning {
       return object : WidgetPositioning {
         override fun getPosition(screen: Screen, x: Float, y: Float, width: Float, height: Float): Pair<Float, Float> {
           return screen.x + screen.width / 2 + relativeX to screen.y + relativeY
@@ -46,7 +46,7 @@ interface WidgetPositioning {
       }
     }
 
-    fun relativeToScreenBottom(relativeX: Float, relativeY: Float): WidgetPositioning {
+    fun relativeToScreenBottom(relativeX: Float = 0f, relativeY: Float = 0f): WidgetPositioning {
       return object : WidgetPositioning {
         override fun getPosition(screen: Screen, x: Float, y: Float, width: Float, height: Float): Pair<Float, Float> {
           return screen.x + screen.width / 2 + relativeX to screen.y + screen.height + relativeY
@@ -54,7 +54,7 @@ interface WidgetPositioning {
       }
     }
 
-    fun relativeToScreenLeft(relativeX: Float, relativeY: Float): WidgetPositioning {
+    fun relativeToScreenLeft(relativeX: Float = 0f, relativeY: Float = 0f): WidgetPositioning {
       return object : WidgetPositioning {
         override fun getPosition(screen: Screen, x: Float, y: Float, width: Float, height: Float): Pair<Float, Float> {
           return screen.x + relativeX to screen.y + screen.height / 2 + relativeY
@@ -62,7 +62,7 @@ interface WidgetPositioning {
       }
     }
 
-    fun relativeToScreenRight(relativeX: Float, relativeY: Float): WidgetPositioning {
+    fun relativeToScreenRight(relativeX: Float = 0f, relativeY: Float = 0f): WidgetPositioning {
       return object : WidgetPositioning {
         override fun getPosition(screen: Screen, x: Float, y: Float, width: Float, height: Float): Pair<Float, Float> {
           return screen.x + screen.width + relativeX to screen.y + screen.height / 2 + relativeY
@@ -70,7 +70,7 @@ interface WidgetPositioning {
       }
     }
 
-    fun relativeToScreenCenter(relativeX: Float, relativeY: Float): WidgetPositioning {
+    fun relativeToScreenCenter(relativeX: Float = 0f, relativeY: Float = 0f): WidgetPositioning {
       return object : WidgetPositioning {
         override fun getPosition(screen: Screen, x: Float, y: Float, width: Float, height: Float): Pair<Float, Float> {
           return screen.x + screen.width / 2 + relativeX to screen.y + screen.height / 2 + relativeY

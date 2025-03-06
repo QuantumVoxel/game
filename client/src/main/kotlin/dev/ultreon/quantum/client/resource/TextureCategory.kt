@@ -6,6 +6,14 @@ import dev.ultreon.quantum.resource.ResourceCategory
 import dev.ultreon.quantum.resource.StaticResource
 import dev.ultreon.quantum.util.NamespaceID
 
+/**
+ * A texture resource category.
+ *
+ * @param parent The parent category.
+ * @param textureManager The texture manager.
+ * @param name The name of the category.
+ * @constructor Creates a new texture category with the specified parameters.
+ */
 open class TextureCategory(override val parent: TexturesCategory, val textureManager: TextureManager, override val name: String) : ResourceCategory {
   private val resources = HashMap<String, Resource>()
 

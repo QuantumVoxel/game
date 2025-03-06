@@ -3,6 +3,7 @@ package dev.ultreon.quantum.client.input
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad
 import ktx.math.vec2
 
+@Deprecated("No touch support anymore", level = DeprecationLevel.WARNING)
 class TouchMovement(val touchpad: Touchpad?) : PlayerMovement {
   var up = false
   var down = false

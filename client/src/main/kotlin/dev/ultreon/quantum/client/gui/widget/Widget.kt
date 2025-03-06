@@ -30,7 +30,7 @@ val Widget.screen: Screen
   }
 
 abstract class Widget(val parent: GuiContainer?) {
-  private var positioning: WidgetPositioning = WidgetPositioning.absolute(0f, 0f)
+  var positioning: WidgetPositioning = WidgetPositioning.absolute(0f, 0f)
   var id: String = ""
   var x: Float = 0f
   var y: Float = 0f

@@ -16,7 +16,7 @@ import ktx.assets.disposeSafely
 /**
  * Manages textures and texture atlases used in the application.
  *
- * The `TextureManager` is responsible for initializing, registering, and managing
+ * The [TextureManager] is responsible for initializing, registering, and managing
  * texture atlases, as well as safely disposing of texture resources when no longer needed.
  * It provides fallback textures for missing resources, preventing application crashes due
  * to missing texture data.
@@ -25,7 +25,7 @@ import ktx.assets.disposeSafely
  * a mechanism to prevent runtime errors caused by missing resources.
  *
  * @constructor
- * Creates a new instance of `TextureManager` with the given `ResourceManager`.
+ * Creates a new instance of [TextureManager] with the given [ResourceManager].
  *
  * @property resourceManager The resource manager used to load and manage resources.
  */

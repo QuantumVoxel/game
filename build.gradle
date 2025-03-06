@@ -1,153 +1,161 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
+import org.jetbrains.dokka.gradle.DokkaTask
+import java.net.URL
+
 
 buildscript {
-  repositories {
-    mavenCentral()
-    maven { url 'https://s01.oss.sonatype.org' }
-    gradlePluginPortal()
-    mavenLocal()
-    google()
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
-    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
-  }
-  dependencies {
-    classpath 'com.android.tools.build:gradle:8.7.3'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-  }
+    repositories {
+        mavenCentral()
+        maven { url 'https://s01.oss.sonatype.org' }
+        gradlePluginPortal()
+        mavenLocal()
+        google()
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+        maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.7.3'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    }
+}
+
+plugins {
+    id "org.jetbrains.dokka" version "2.0.0"
 }
 
 allprojects {
-  apply plugin: 'eclipse'
-  apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
 
-  repositories {
-      mavenCentral()
-      google()
-  }
-
-  // This allows you to "Build and run using IntelliJ IDEA", an option in IDEA's Settings.
-  idea {
-    module {
-      outputDir file('build/classes/java/main')
-      testOutputDir file('build/classes/java/test')
+    repositories {
+        mavenCentral()
+        google()
     }
-  }
+
+    // This allows you to "Build and run using IntelliJ IDEA", an option in IDEA's Settings.
+    idea {
+        module {
+            outputDir file('build/classes/java/main')
+            testOutputDir file('build/classes/java/test')
+        }
+    }
 }
 
-configure(subprojects - project(':android')) {
-  apply plugin: 'java-library'
-  apply plugin: 'kotlin'
-  sourceCompatibility = 11
-  targetCompatibility = 11
+configure(subprojects/* - project(':android')*/) {
+    apply plugin: 'java-library'
+    apply plugin: 'kotlin'
+    sourceCompatibility = 11
+    targetCompatibility = 11
 
-  // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
-  // The article can be helpful when using assets.txt in your project.
-  tasks.register('generateAssetList') {
-    inputs.dir("${project.rootDir}/assets/")
-    // projectFolder/assets
-    File assetsFolder = new File("${project.rootDir}/assets/")
-    // projectFolder/assets/assets.txt
-    File assetsFile = new File(assetsFolder, "assets.txt")
-    // delete that file in case we've already created it
-    assetsFile.delete()
+    // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
+    // The article can be helpful when using assets.txt in your project.
+    tasks.register('generateAssetList') {
+        inputs.dir("${project.rootDir}/assets/")
+        // projectFolder/assets
+        File assetsFolder = new File("${project.rootDir}/assets/")
+        // projectFolder/assets/assets.txt
+        File assetsFile = new File(assetsFolder, "assets.txt")
+        // delete that file in case we've already created it
+        assetsFile.delete()
 
-    // iterate through all files inside that folder
-    // convert it to a relative path
-    // and append it to the file assets.txt
-    fileTree(assetsFolder).collect { assetsFolder.relativePath(it) }.sort().each {
-      if ("node_modules" == it) return
-      if (it.endsWith(".lock")) return
-      if (it.endsWith(".DS_Store")) return
-      if (it.startsWith("._")) return
-      assetsFile.append(it + "\n")
+        // iterate through all files inside that folder
+        // convert it to a relative path
+        // and append it to the file assets.txt
+        fileTree(assetsFolder).collect { assetsFolder.relativePath(it) }.sort().each {
+            if ("node_modules" == it) return
+            if (it.endsWith(".lock")) return
+            if (it.endsWith(".DS_Store")) return
+            if (it.startsWith("._")) return
+            assetsFile.append(it + "\n")
+        }
     }
-  }
-  processResources.dependsOn 'generateAssetList'
+    processResources.dependsOn 'generateAssetList'
 
-  compileJava {
-    options.incremental = true
-  }
-  compileKotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
-  compileTestKotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
+    compileJava {
+        options.incremental = true
+    }
+    compileKotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
+    compileTestKotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
 
 }
 
 subprojects {
-  version = projectVersion + (snapshot == "true" ? "-SNAPSHOT" : "")
-  ext.appName = 'QuantumVoxel'
-  repositories {
-    maven { url 'https://jitpack.io' }
-    mavenCentral()
-    maven { url 'https://s01.oss.sonatype.org' }
-    // You may want to remove the following line if you have errors downloading dependencies.
-    mavenLocal()
-    maven { url 'https://teavm.org/maven/repository/' }
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
-    maven { url 'https://oss.sonatype.org/content/repositories/releases/' }
-    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
-    maven { url 'https://s01.oss.sonatype.org/content/repositories/releases/' }
+    version = projectVersion + (snapshot == "true" ? "-SNAPSHOT" : "")
+    ext.appName = 'QuantumVoxel'
+    repositories {
+        maven { url 'https://jitpack.io' }
+        mavenCentral()
+        maven { url 'https://s01.oss.sonatype.org' }
+        // You may want to remove the following line if you have errors downloading dependencies.
+        mavenLocal()
+        maven { url 'https://maven.fabricmc.net/' }
+        maven { url 'https://teavm.org/maven/repository/' }
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+        maven { url 'https://oss.sonatype.org/content/repositories/releases/' }
+        maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+        maven { url 'https://s01.oss.sonatype.org/content/repositories/releases/' }
 
-    maven {
-      url = uri("https://maven.pkg.github.com/Ultreon/quantumvoxel-recomp")
-      credentials {
-        username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-        password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
-      }
-    }
-  }
-
-  if (name != 'android') {
-    apply plugin: 'maven-publish'
-
-    publishing {
-      publications {
-        maven(MavenPublication) {
-          from(components.java)
-        }
-      }
-
-      repositories {
         maven {
-          url = uri("https://maven.pkg.github.com/Ultreon/quantumvoxel-recomp")
-          credentials {
-            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-            password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
-          }
+            url = uri("https://maven.pkg.github.com/Ultreon/quantumvoxel-recomp")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            }
         }
-      }
     }
-  }
+
+    if (name != 'android') {
+        apply plugin: 'maven-publish'
+
+        publishing {
+            publications {
+                maven(MavenPublication) {
+                    from(components.java)
+                }
+            }
+
+            repositories {
+                maven {
+                    url = uri("https://maven.pkg.github.com/Ultreon/quantumvoxel-recomp")
+                    credentials {
+                        username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                        password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+                    }
+                }
+            }
+        }
+    }
 }
 
 eclipse.project.name = 'QuantumVoxel' + '-parent'
 
 tasks.register('generateBindings', JavaExec) {
-  classpath = files(project(":client").jar.outputs.files + project(":common").jar.outputs.files + project(":server").jar.outputs.files
-    + project(":client").sourceSets.main.runtimeClasspath + project(":common").sourceSets.main.runtimeClasspath + project(":server").sourceSets.main.runtimeClasspath
-    + project(":generator").sourceSets.main.runtimeClasspath)
-  mainClass = 'dev.ultreon.langgen.Main'
-  args = ['--js', '--stub', '--output=' + file("modules/quantum")]
+    classpath = files(project(":client").jar.outputs.files + project(":common").jar.outputs.files + project(":server").jar.outputs.files
+            + project(":client").sourceSets.main.runtimeClasspath + project(":common").sourceSets.main.runtimeClasspath + project(":server").sourceSets.main.runtimeClasspath
+            + project(":generator").sourceSets.main.runtimeClasspath)
+    mainClass = 'dev.ultreon.langgen.Main'
+    args = ['--js', '--stub', '--output=' + file("modules/quantum")]
 
-  inputs.files(project(":client").sourceSets.main.java.srcDirs, project(":common").sourceSets.main.java.srcDirs, project(":server").sourceSets.main.java.srcDirs)
-  outputs.dir(file("modules/quantum"))
+    inputs.files(project(":client").sourceSets.main.java.srcDirs, project(":common").sourceSets.main.java.srcDirs, project(":server").sourceSets.main.java.srcDirs)
+    outputs.dir(file("modules/quantum"))
 
-  group = 'build'
-  description = 'Generate bindings'
+    group = 'build'
+    description = 'Generate bindings'
 
-  finalizedBy('compileTypescript')
+    finalizedBy('compileTypescript')
 
-  dependsOn(':client:compileJava', ':common:compileJava', ':server:compileJava', ':generator:compileJava')
-  dependsOn(':client:compileKotlin', ':common:compileKotlin', ':server:compileKotlin', ':generator:compileKotlin')
-  dependsOn(':client:processResources', ':common:processResources', ':server:processResources', ':generator:processResources')
-  dependsOn(':client:jar', ':common:jar', ':server:jar')
-  project(":lwjgl3").processResources.dependsOn generateBindings
+    dependsOn(':client:compileJava', ':common:compileJava', ':server:compileJava', ':generator:compileJava')
+    dependsOn(':client:compileKotlin', ':common:compileKotlin', ':server:compileKotlin', ':generator:compileKotlin')
+    dependsOn(':client:processResources', ':common:processResources', ':server:processResources', ':generator:processResources')
+    dependsOn(':client:jar', ':common:jar', ':server:jar')
+    project(":lwjgl3").processResources.dependsOn generateBindings
 }
 
 tasks.register('compileTypescript'/*, Exec*/) {
-  doFirst {
-    println("Hello")
-  }
+    doFirst {
+        println("Hello")
+    }
 //  group = 'build'
 //  description = 'Compile typescript'
 //
@@ -166,31 +174,129 @@ tasks.register('compileTypescript'/*, Exec*/) {
 }
 
 tasks.register('packageQuantumJS', Zip) {
-  group = 'build'
-  description = 'Package Quantum.JS module'
+    group = 'build'
+    description = 'Package Quantum.JS module'
 
-  from(fileTree("dist/quantum").include("**/*.mjs"))
-  outputs.upToDateWhen { false }
+    from(fileTree("dist/quantum").include("**/*.mjs"))
+    outputs.upToDateWhen { false }
 
-  archiveFileName = 'quantum.zip'
-  destinationDirectory = file('build/modules/internal')
+    archiveFileName = 'quantum.zip'
+    destinationDirectory = file('build/modules/internal')
 
-  dependsOn('compileTypescript')
+    dependsOn('compileTypescript')
 }
 
 afterEvaluate {
-  project(":lwjgl3").processResources.dependsOn packageQuantumJS
-  project(":switchgdx").processResources.dependsOn packageQuantumJS
-  project(":android").tasks.withType(LinkApplicationAndroidResourcesTask).collect { it.dependsOn packageQuantumJS }
-  project(":android").tasks.withType(LinkApplicationAndroidResourcesTask).collect { it.dependsOn packageQuantumJS }
-  project(":ios").processResources.dependsOn packageQuantumJS
+    project(":lwjgl3").processResources.dependsOn packageQuantumJS
+//    project(":switchgdx").processResources.dependsOn packageQuantumJS
+//    project(":android").tasks.withType(LinkApplicationAndroidResourcesTask).collect { it.dependsOn packageQuantumJS }
+//    project(":android").tasks.withType(LinkApplicationAndroidResourcesTask).collect { it.dependsOn packageQuantumJS }
+//    project(":ios").processResources.dependsOn packageQuantumJS
+}
+
+//dokka {
+//    moduleName.set("Quantum Voxel")
+//
+//    dokkaSourceSets {
+//        configureEach {
+//            skipEmptyPackages.set(true)
+//        }
+//        create("common") {
+//            displayName.set("Common")
+//            sourceRoots.from("common/src/main/kotlin")
+//            s
+//        }
+//        create("client") {
+//            displayName.set("Client")
+//            sourceRoots.from("client/src/main/kotlin")
+//            sourceRoots.from("client/src/main/java")
+//        }
+//        create("server") {
+//            displayName.set("Server")
+//            sourceRoots.from("server/src/main/kotlin")
+//            sourceRoots.from("server/src/main/java")
+//        }
+//        create("lwjgl3") {
+//            displayName.set("LWJGL3")
+//            sourceRoots.from("lwjgl3/src/main/kotlin")
+//            sourceRoots.from("lwjgl3/src/main/java")
+//        }
+//        create("gameprovider") {
+//            displayName.set("Game Provider")
+//            sourceRoots.from("gameprovider/src/main/kotlin")
+//            sourceRoots.from("gameprovider/src/main/java")
+//        }
+//    }
+//}
+
+// Configure dokka to include the client and server source sets
+tasks.withType(DokkaTask) {
+    moduleName.set("Quantum Voxel")
+
+    dokkaSourceSets {
+        configureEach {
+            classpath.from(subprojects.collect { it.sourceSets.main.compileClasspath })
+            includeNonPublic.set(true)
+            skipEmptyPackages.set(true)
+
+            externalDocumentationLink {
+                url.set(uri("https://docs.oracle.com/en/java/javase/17/docs/api/").toURL())
+                packageListUrl.set(uri("https://docs.oracle.com/en/java/javase/17/docs/api/package-list").toURL())
+            }
+
+            externalDocumentationLink {
+                url.set(uri("https://javadoc.io/doc/org.lwjgl/lwjgl").toURL())
+                packageListUrl.set(uri("https://javadoc.io/doc/org.lwjgl/lwjgl/package-list").toURL())
+            }
+
+            externalDocumentationLink {
+                url.set(uri("https://javadoc.io/doc/org.lwjgl/lwjgl.glfw").toURL())
+                packageListUrl.set(uri("https://javadoc.io/doc/org.lwjgl/lwjgl.glfw/package-list").toURL())
+            }
+
+            externalDocumentationLink {
+                url.set(uri("https://javadoc.io/doc/org.lwjgl/lwjgl.opengl").toURL())
+                packageListUrl.set(uri("https://javadoc.io/doc/org.lwjgl/lwjgl.opengl/package-list").toURL())
+            }
+
+            externalDocumentationLink {
+                url.set(uri("https://javadoc.io/doc/com.badlogicgames.gdx/gdx").toURL())
+                packageListUrl.set(uri("https://javadoc.io/doc/com.badlogicgames.gdx/gdx/package-list").toURL())
+            }
+        }
+        create("common") {
+            displayName.set("Common")
+            sourceRoots.from("common/src/main/kotlin")
+            sourceRoots.from("common/src/main/java")
+        }
+        create("client") {
+            displayName.set("Client")
+            sourceRoots.from("client/src/main/kotlin")
+            sourceRoots.from("client/src/main/java")
+        }
+        create("server") {
+            displayName.set("Dedicated Server")
+            sourceRoots.from("server/src/main/kotlin")
+            sourceRoots.from("server/src/main/java")
+        }
+        create("lwjgl3") {
+            displayName.set("LWJGL3")
+            sourceRoots.from("lwjgl3/src/main/kotlin")
+            sourceRoots.from("lwjgl3/src/main/java")
+        }
+        create("gameprovider") {
+            displayName.set("Game Provider")
+            sourceRoots.from("gameprovider/src/main/kotlin")
+            sourceRoots.from("gameprovider/src/main/java")
+        }
+    }
 }
 
 tasks.register('runAnsiConsole', JavaExec) {
-  classpath = project(":lwjgl3").sourceSets.main.runtimeClasspath
-  mainClass = 'dev.ultreon.quantum.lwjgl3.ANSIConsole'
+    classpath = project(":lwjgl3").sourceSets.main.runtimeClasspath
+    mainClass = 'dev.ultreon.quantum.lwjgl3.ANSIConsole'
 
-  group = 'application'
-  description = 'Run ANSI console test'
+    group = 'application'
+    description = 'Run ANSI console test'
 }
 
