@@ -304,7 +304,6 @@ open class ClientDimension(private val material: Material) : Dimension() {
     this@ClientDimension.toRebuild = toRebuild.toList()
 
     for (chunk in requiredChunks) {
-      logger.debug("Loading chunk ${chunk.first}")
       loadChunkAsync(chunk.first.x, chunk.first.y, chunk.first.z, build = true)
       Thread.yield()
     }
