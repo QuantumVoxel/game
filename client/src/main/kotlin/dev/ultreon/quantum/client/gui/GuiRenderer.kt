@@ -1,8 +1,15 @@
 package dev.ultreon.quantum.client.gui
 
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
+import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack
 import com.github.tommyettinger.textra.Layout
+import com.github.tommyettinger.textra.TypingLabel
 import dev.ultreon.quantum.client.QuantumVoxel
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.util.NamespaceID
@@ -16,6 +23,7 @@ import dev.ultreon.quantum.util.NamespaceID
  * @see SpriteBatch
  */
 class GuiRenderer(private val batch: SpriteBatch) {
+  private val translation: Vector2 = Vector2()
   val font = QuantumVoxel.instance.font
 
   private val tmpRegion = TextureRegion()
@@ -182,7 +190,27 @@ class GuiRenderer(private val batch: SpriteBatch) {
    * @param y The y-coordinate of the text.
    */
   fun drawText(text: String, x: Float, y: Float) {
-    font.drawMarkupText(batch, text, x, y)
+    layout.reset()
+    font.markup(text, layout)
+    font.drawGlyphs(batch, layout, x, y)
+  }
+
+  fun drawText(text: String, x: Float, y: Float, width: Float, height: Float) {
+    layout.reset()
+    layout.targetWidth = width
+    font.markup(text, layout)
+    font.drawGlyphs(batch, layout, x, y)
+  }
+
+  fun drawText(text: TypingLabel, x: Float, y: Float) {
+    text.setPosition(x, y)
+    text.act(Gdx.graphics.deltaTime)
+    text.draw(batch, 1f)
+  }
+
+  fun drawText(text: Actor) {
+    text.act(Gdx.graphics.deltaTime)
+    text.draw(batch, 1f)
   }
 
   /**
@@ -222,6 +250,7 @@ class GuiRenderer(private val batch: SpriteBatch) {
    * Begins drawing.
    */
   fun begin() {
+    batch.setBlendFunctionSeparate(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA)
     batch.begin()
   }
 
@@ -471,5 +500,50 @@ class GuiRenderer(private val batch: SpriteBatch) {
   ) {
     val textureRegion = quantum.textureManager[texture]
     drawNinePatch(textureRegion, leftInset, topInset, rightInset, bottomInset, x, y - height, width, height, texWidth, texHeight)
+  }
+
+  fun translate(x: Float, y: Float) {
+    val translate = batch.transformMatrix.translate(x, y, 0F)
+    translation.add(x, y)
+    batch.transformMatrix = translate
+  }
+
+  fun translation(vector2: Vector2): Vector2 {
+    return vector2.set(translation)
+  }
+
+  fun translated(x: Float, y: Float, function: () -> Unit) {
+    translate(x, y)
+    try {
+      function()
+    } finally {
+      translate(-x, -y)
+    }
+  }
+
+  fun subInstance(x: Float, y: Float, width: Float, height: Float, function: (GuiRenderer) -> Unit) {
+    translate(x, y)
+    batch.flush()
+    try {
+      val guiScale = QuantumVoxel.instance.guiScale
+      val fl: Float = translation.y * guiScale
+      val rectangle = Rectangle(translation.x * guiScale, fl, width * guiScale, height * guiScale)
+      if (ScissorStack.pushScissors(rectangle)) {
+        function(this)
+        batch.flush()
+        ScissorStack.popScissors()
+      }
+    } finally {
+      translate(-x, -y)
+    }
+  }
+
+  fun withoutBlending(function: () -> Unit) {
+    batch.disableBlending()
+    try {
+      function()
+    } finally {
+      batch.enableBlending()
+    }
   }
 }

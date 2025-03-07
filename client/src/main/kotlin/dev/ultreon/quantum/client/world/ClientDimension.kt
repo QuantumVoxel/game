@@ -370,6 +370,10 @@ open class ClientDimension(private val material: Material) : Dimension() {
   }
 
   override fun dispose() {
+    asyncChunkGen.dispose()
+
+    logger.debug("Disposing chunks...")
+
     for (chunk in chunks.values) {
       val disposeChunk = chunk.disposeChunk()
       if (!disposeChunk) {

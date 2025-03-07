@@ -19,8 +19,9 @@ import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
 import com.github.tommyettinger.textra.Layout
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.blocks.Blocks
-import dev.ultreon.quantum.client.gui.screens.IdScreen
+import dev.ultreon.quantum.client.gui.screens.PauseScreen
 import dev.ultreon.quantum.client.gui.screens.screen
 import dev.ultreon.quantum.client.input.KeyBinds
 import dev.ultreon.quantum.client.world.Skybox
@@ -28,15 +29,11 @@ import dev.ultreon.quantum.entity.PositionComponent
 import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.math.Vector3D
-import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.util.BlockHit
 import dev.ultreon.quantum.util.NamespaceID
-import dev.ultreon.quantum.util.id
 import dev.ultreon.quantum.vec3d
-import kotlinx.coroutines.launch
 import ktx.app.clearScreen
 import ktx.assets.disposeSafely
-import ktx.async.KtxAsync
 import ktx.math.vec3
 
 private val tmp1 = vec3()
@@ -304,7 +301,7 @@ class EnvironmentRenderer : Disposable {
     if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) && !gamePlatform.isMobile) {
       if (Gdx.input.isCursorCatched) {
         quantum.submit {
-          quantum.showScreen(IdScreen.get(id(path = "pause")) ?: run {
+          quantum.showScreen(PauseScreen() ?: run {
             logger.error("No pause screen found")
             return@submit
           })

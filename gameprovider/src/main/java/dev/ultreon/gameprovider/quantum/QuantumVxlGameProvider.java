@@ -127,41 +127,39 @@ public class QuantumVxlGameProvider implements GameProvider {
     @Override
     public Collection<BuiltinMod> getBuiltinMods() {
         return List.of(
-                // Creating a BuiltinMod for LibGDX
-                new BuiltinMod(List.of(this.libGdxJar), new BuiltinModMetadata.Builder("gdx", Version.VERSION)
-                        .setName("LibGDX")
-                        .setDescription("""
-                                LibGDX is a Java game development framework for
-                                 creating games across multiple platforms.
-                                It simplifies the development process with
-                                 cross-platform capabilities, high-performance rendering,
-                                 and a large community.
-                                """)
-                        .addLicense("Apache-2.0")
-                        .addAuthor("libGDX", Map.of("homepage", "http://www.libgdx.com/", "patreon", "https://patreon.com/libgdx", "github", "https://github.com/libgdx", "sources", "https://github.com/libgdx/libgdx"))
-                        .addAuthor("Mario Zechner", Map.of("github", "https://github.com/badlogic", "email", "badlogicgames@gmail.com"))
-                        .addAuthor("Nathan Sweet", Map.of("github", "https://github.com/NathanSweet", "email", "nathan.sweet@gmail.com"))
-                        .addIcon(200, "assets/gdx/icon.png")
-                        .setEnvironment(ModEnvironment.UNIVERSAL)
-                        .build()),
-                // Creating a BuiltinMod for Quantum Voxel
-                new BuiltinMod(this.gameJars, new BuiltinModMetadata.Builder("quantum", this.versions.getProperty("quantum"))
-                        .addLicense("Ultreon-PSL-1.0")
-                        .addAuthor("Ultreon Development Studios", Map.of("github", "https://github.com/Ultreon", "gitlab", "https://gitlab.com/ultreon", "email", "contact@ultreon.dev"))
-                        .addContributor("XyperCode", Map.of("github", "https://github.com/XyperCode", "gitlab", "https://gitlab.com/XyperCode", "email", "xypercode@ultreon.dev"))
-                        .addContributor("MincraftEinstein", Map.of("github", "https://github.com/MincraftEinstein"))
-                        .addContributor("Creatomat Gaming", Map.of("github", "https://github.com/Creatomat"))
-                        .addIcon(128, "assets/craft/icon.png")
-                        .setEnvironment(ModEnvironment.UNIVERSAL)
-                        .setContact(new ContactInformationImpl(Map.of("sources", "https://gitlab.com/ultreon/quantum/game", "email", "contact.ultreon@gmail.com", "homepage", "https://ultreon.dev/?id=quantum#project", "discord", "https://discord.gg/WePT9v2CmQ", "issues", "https://gitlab.com/ultreon/quantum/game/-/issues")))
-                        .setDescription("""
-                                A blocky, voxel-based world where you can explore,
-                                 build, and survive in a vast and ever-changing environment.
-                                Inspired by the best of the voxel game genre.
-
-                                It's also the game that you're playing right now!""")
-                        .setName("Quantum Voxel")
-                        .build())
+            // Creating a BuiltinMod for LibGDX
+            new BuiltinMod(List.of(this.libGdxJar), new BuiltinModMetadata.Builder("gdx", Version.VERSION)
+                .setName("LibGDX")
+                .setDescription("""
+                    LibGDX is a Java game development framework for
+                     creating games across multiple platforms.
+                    It simplifies the development process with
+                     cross-platform capabilities, high-performance rendering,
+                     and a large community.
+                    """)
+                .addLicense("Apache-2.0")
+                .addAuthor("libGDX", Map.of("homepage", "http://www.libgdx.com/", "patreon", "https://patreon.com/libgdx", "github", "https://github.com/libgdx", "sources", "https://github.com/libgdx/libgdx"))
+                .addAuthor("Mario Zechner", Map.of("github", "https://github.com/badlogic", "email", "badlogicgames@gmail.com"))
+                .addAuthor("Nathan Sweet", Map.of("github", "https://github.com/NathanSweet", "email", "nathan.sweet@gmail.com"))
+                .addIcon(200, "assets/gdx/icon.png")
+                .setEnvironment(ModEnvironment.UNIVERSAL)
+                .build()),
+            // Creating a BuiltinMod for Quantum Voxel
+            new BuiltinMod(this.gameJars, new BuiltinModMetadata.Builder("quantum", this.versions.getProperty("quantum"))
+                .addLicense("Ultreon-PSL-1.0")
+                .addAuthor("Ultreon Development Studios", Map.of("github", "https://github.com/Ultreon", "gitlab", "https://gitlab.com/ultreon", "email", "contact@ultreon.dev"))
+                .addContributor("Qubilux", Map.of("homepage", "https://xypercode.github.io/", "github", "https://github.com/XyperCode", "gitlab", "https://gitlab.com/XyperCode", "email", "xypercode@ultreon.dev"))
+                .addContributor("MincraftEinstein", Map.of("homepage", "https://mincrafteinstein.github.io/", "github", "https://github.com/MincraftEinstein"))
+                .addContributor("guinea7pig", Map.of("homepage", "https://github.com/guinea7pig", "github", "https://github.com/guinea7pig"))
+                .addContributor("Creatomat", Map.of("homepage", "https://github.com/Creatomat", "github", "https://github.com/Creatomat"))
+                .addIcon(128, "assets/craft/icon.png")
+                .setEnvironment(ModEnvironment.UNIVERSAL)
+                .setContact(new ContactInformationImpl(Map.of("sources", "https://github.com/QuantumVoxel/game", "email", "contact.ultreon@gmail.com", "homepage", "https://ultreon.dev/?id=quantum#project", "discord", "https://discord.gg/WePT9v2CmQ", "issues", "https://github.com/QuantumVoxel/game/issues")))
+                .setDescription("""
+                    A blocky, voxel-based world where you can explore, build, and survive in a vast and ever-changing environment. Inspired by the best of the voxel game genre.
+                    It's also the game that you're playing right now!""")
+                .setName("Quantum Voxel")
+                .build())
         );
     }
 

@@ -1,9 +1,9 @@
 package dev.ultreon.quantum.client
 
 import dev.ultreon.quantum.client.gui.screens.*
+import dev.ultreon.quantum.client.gui.widget.Text
+import dev.ultreon.quantum.client.gui.widget.button.TextButton
 import dev.ultreon.quantum.client.gui.widget.WidgetPositioning
-import dev.ultreon.quantum.logger
-import dev.ultreon.quantum.util.id
 
 class DisconnectedScreen(val message: String) : Screen() {
   override fun setup() {

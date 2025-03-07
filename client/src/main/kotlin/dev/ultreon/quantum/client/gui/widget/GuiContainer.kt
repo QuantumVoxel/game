@@ -7,16 +7,20 @@ import dev.ultreon.quantum.client.gui.screens.Screen
 import dev.ultreon.quantum.logger
 
 open class GuiContainer(parent: GuiContainer?) : Widget(parent) {
-  private val children = mutableListOf<Widget>()
+  protected val children = mutableListOf<Widget>()
   val widgets: MutableMap<String, Widget> = mutableMapOf()
 
   @OptIn(InternalApi::class)
-  inline fun <reified T : Widget> add(block: T.() -> Unit): T {
+  inline fun <reified T : Widget> add(block: T.() -> Unit = {}): T {
     return add(WidgetFactories.create<T>(this).apply(block))
   }
 
   @InternalApi
   fun <T : Widget> add(widget: T): T {
+    if (widget.id.isBlank()) {
+      throw IllegalArgumentException("Widget id can't be blank")
+    }
+
     if (widget.id in widgets) {
       logger.warn("Duplicate widget id in container: ${widget.id}")
       val remove = widgets.remove(widget.id)
@@ -51,9 +55,18 @@ open class GuiContainer(parent: GuiContainer?) : Widget(parent) {
 
   }
 
+  @Suppress("GDXKotlinFlushInsideLoop")
   open fun renderChildren(renderer: GuiRenderer, mouseX: Int, mouseY: Int, delta: Float) {
     for (child in children) {
-      renderChild(renderer, child, mouseX, mouseY, delta)
+      if (child.clipping) {
+        renderer.subInstance(child.x, child.y, child.width, child.height) {
+          renderChild(it, child, mouseX, mouseY, delta)
+        }
+      } else {
+        renderer.translated(child.x, child.y) {
+          renderChild(renderer, child, mouseX, mouseY, delta)
+        }
+      }
     }
   }
 
@@ -62,7 +75,7 @@ open class GuiContainer(parent: GuiContainer?) : Widget(parent) {
   }
 
   override fun touchDown(x: Float, y: Float, button: Int, pointer: Int): Boolean {
-    for (child in children) {
+    for (child in children.reversed()) {
       if (child.contains(x, y) && child.touchDown(x - child.x, y - child.y, button, pointer)) {
         return true
       }
@@ -72,10 +85,8 @@ open class GuiContainer(parent: GuiContainer?) : Widget(parent) {
   }
 
   override fun touchUp(x: Float, y: Float, button: Int, pointer: Int): Boolean {
-    for (child in children) {
-      if (child.touchUp(x - child.x, y - child.y, button, pointer)) {
-        return true
-      }
+    for (child in children.reversed()) {
+      child.touchUp(x - child.x, y - child.y, button, pointer)
     }
 
     return false
@@ -83,7 +94,7 @@ open class GuiContainer(parent: GuiContainer?) : Widget(parent) {
 
   override fun mouseScroll(x: Float, y: Float, deltaX: Float, deltaY: Float): Boolean {
     for (child in children) {
-      if (child.mouseScroll(x, y, deltaX, deltaY)) {
+      if (child.mouseScroll(x - child.x, y - child.y, deltaX, deltaY)) {
         return true
       }
     }

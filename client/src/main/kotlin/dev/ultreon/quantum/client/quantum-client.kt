@@ -8,12 +8,16 @@ import com.artemis.World
 import com.artemis.utils.Bag
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
-import com.badlogic.gdx.graphics.*
+import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.OrthographicCamera
+import com.badlogic.gdx.graphics.Pixmap
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad
+import com.badlogic.gdx.utils.Clipboard
 import com.badlogic.gdx.utils.JsonValue
 import com.badlogic.gdx.utils.Queue
 import com.badlogic.gdx.utils.async.AsyncExecutor
@@ -22,16 +26,21 @@ import com.badlogic.gdx.utils.viewport.Viewport
 import com.github.tommyettinger.textra.Font
 import com.github.tommyettinger.textra.KnownFonts
 import dev.ultreon.quantum.*
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.blocks.Blocks
 import dev.ultreon.quantum.blocks.PropertyKeys
+import dev.ultreon.quantum.client.QuantumVoxel.Companion.instance
 import dev.ultreon.quantum.client.debug.DebugRenderer
 import dev.ultreon.quantum.client.gui.GuiRenderer
 import dev.ultreon.quantum.client.gui.screens.PlaceholderScreen
 import dev.ultreon.quantum.client.gui.screens.Screen
+import dev.ultreon.quantum.client.gui.widget.GuiContainer
+import dev.ultreon.quantum.client.gui.widget.ModSidebar
+import dev.ultreon.quantum.client.gui.widget.Text
+import dev.ultreon.quantum.client.gui.widget.button.TextButton
 import dev.ultreon.quantum.client.input.*
 import dev.ultreon.quantum.client.model.JsonModelLoader
 import dev.ultreon.quantum.client.model.ModelRegistry
-import dev.ultreon.quantum.client.network.ClientBaseSocket
 import dev.ultreon.quantum.client.network.ClientConnection
 import dev.ultreon.quantum.client.scripting.ClientContextTypes
 import dev.ultreon.quantum.client.scripting.cond.ClientConditions
@@ -39,17 +48,13 @@ import dev.ultreon.quantum.client.texture.TextureManager
 import dev.ultreon.quantum.client.world.ClientDimension
 import dev.ultreon.quantum.client.world.LocalPlayer
 import dev.ultreon.quantum.network.Connection
+import dev.ultreon.quantum.network.ConnectionStage
 import dev.ultreon.quantum.resource.ResourceManager
 import dev.ultreon.quantum.scripting.ContextAware
 import dev.ultreon.quantum.scripting.ContextType
 import dev.ultreon.quantum.scripting.ContextValue
 import dev.ultreon.quantum.scripting.PersistentData
 import dev.ultreon.quantum.scripting.function.function
-import dev.ultreon.quantum.async.Future
-import dev.ultreon.quantum.client.gui.screens.Text
-import dev.ultreon.quantum.client.gui.screens.TextButton
-import dev.ultreon.quantum.client.gui.widget.GuiContainer
-import dev.ultreon.quantum.network.ConnectionStage
 import dev.ultreon.quantum.util.NamespaceID
 import ktx.app.*
 import ktx.assets.disposeSafely
@@ -121,6 +126,7 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     instance = this
   }
 
+  val clipboard: Clipboard by lazy { Gdx.app.clipboard }
   var chunkQueue: Int = 0
   val chat: ChatGui = ChatGui()
   var connection: Connection? = null
@@ -302,16 +308,6 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     Gdx.input.setCatchKey(Input.Keys.BACK, true)
     Gdx.input.inputProcessor = this
 
-//    val host = V8Host.getNodeInstance()
-//    this.v8Runtime = host.createV8Runtime()
-//    this.gen = Gen(v8Runtime, JNEventLoop(v8Runtime)).apply { prepare() }
-//
-//    gen.importZip(Gdx.files.internal("internal/quantum.zip"))
-//
-//    for (file in Gdx.files.local("modules").list()) {
-//      gen.loadDirectory(file.path())
-//    }
-
     logger.debug("Quantum Voxel started!", this)
   }
 
@@ -319,26 +315,12 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     WidgetFactories.register { Text(it) }
     WidgetFactories.register { TextButton(it) }
     WidgetFactories.register { GuiContainer(it) }
+    WidgetFactories.register { ModSidebar(it) }
   }
 
   fun startWorld() {
-//    world = World()
-
     dimension = ClientDimension(material)
-    player = /*world!!.createEntity().also { entity ->
-      val positionComponent = PositionComponent(vec3d(0, 128, 0))
-      entity.edit()
-        .add(LocalPlayerComponent("Player"))
-        .add(RunningComponent(1.6F))
-        .add(positionComponent)
-        .add(InventoryComponent())
-        .add(CollisionComponent().also {
-          it.positionComponent = positionComponent
-          it.dimension = dimension!!
-        })
-
-      environmentRenderer?.lastRefreshPosition?.set(entity.getComponent(PositionComponent::class.java).position)
-    }*/ dimension!!.spawnPlayer(vec3d(0, 128, 0))
+    player = dimension!!.spawnPlayer(vec3d(0, 128, 0))
 
     backgroundRenderer.disposeSafely()
     backgroundRenderer = null
@@ -476,6 +458,7 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     dimension?.tick()
     bag.clear()
     player?.tick()
+    (screen as? Screen)?.tick()
   }
 
   /**
@@ -581,14 +564,28 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
   lateinit var guiViewport: Viewport
     private set
 
+  private var lastMouseX = 0
+  private var lastMouseY = 0
+
   @InternalApi
   override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean = handleInput {
     val scr = screen
+    lastMouseX = screenX
+    lastMouseY = screenY
     if (scr is Screen) {
-      return@handleInput scr.touchDown(screenX / guiScale, screenY / guiScale, pointer, button)
+      return@handleInput scr.touchDown(screenX / guiScale, (Gdx.graphics.height - screenY) / guiScale, pointer, button)
     }
 
     return@handleInput super.touchDown(screenX, screenY, pointer, button)
+  }
+
+  override fun scrolled(amountX: Float, amountY: Float): Boolean {
+    val scr = screen
+    if (scr is Screen) {
+      return scr.mouseScroll(lastMouseX / guiScale, (Gdx.graphics.height - lastMouseY) / guiScale, amountX, amountY)
+    }
+
+    return super.scrolled(amountX, amountY)
   }
 
   @InternalApi
@@ -596,7 +593,7 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
     val scr = screen
     var result = false
     if (scr is Screen) {
-      result = result or scr.touchUp(screenX / guiScale, screenY / guiScale, pointer, button)
+      result = result or scr.touchUp(screenX / guiScale, (Gdx.graphics.height - screenY) / guiScale, pointer, button)
     }
 
     return@handleInput result or super.touchUp(screenX, screenY, pointer, button)

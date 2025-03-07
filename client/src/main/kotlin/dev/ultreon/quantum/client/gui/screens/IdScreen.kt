@@ -2,13 +2,14 @@ package dev.ultreon.quantum.client.gui.screens
 
 import dev.ultreon.quantum.InternalApi
 import dev.ultreon.quantum.client.globalBatch
+import dev.ultreon.quantum.client.gui.widget.Text
+import dev.ultreon.quantum.client.gui.widget.button.TextButton
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.client.scripting.ClientContextTypes
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.resource.*
 import dev.ultreon.quantum.scripting.condition.VirtualCondition
 import dev.ultreon.quantum.scripting.function.CallContext
-import dev.ultreon.quantum.scripting.ContextType
 import dev.ultreon.quantum.scripting.ContextValue
 import dev.ultreon.quantum.util.NamespaceID
 import kotlin.reflect.KProperty

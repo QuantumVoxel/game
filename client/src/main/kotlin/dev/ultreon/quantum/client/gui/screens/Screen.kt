@@ -100,8 +100,8 @@ abstract class Screen(parent: Screen? = null) : KtxScreen, GuiContainer(parent) 
     this.preRender(this)
     this.render(
       renderer = QuantumVoxel.instance.guiRenderer,
-      x = (Gdx.input.x / guiScale).toInt(),
-      y = (Gdx.input.y / guiScale).toInt(),
+      mouseX = (Gdx.input.x / guiScale).toInt(),
+      mouseY = (Gdx.graphics.height / guiScale - Gdx.input.y / guiScale).toInt(),
       delta
     )
   }
@@ -110,13 +110,15 @@ abstract class Screen(parent: Screen? = null) : KtxScreen, GuiContainer(parent) 
    * This function is called every frame and is responsible for rendering the screen.
    *
    * @param renderer The renderer to render the screen with.
-   * @param x The x position of the mouse.
-   * @param y The y position of the mouse.
+   * @param mouseX The x position of the mouse.
+   * @param mouseY The y position of the mouse.
    * @param delta The time in seconds since the last frame.
    * @see GuiContainer.render
    */
-  override fun render(renderer: GuiRenderer, x: Int, y: Int, delta: Float) {
-    super<GuiContainer>.render(renderer, x, y, delta)
+  override fun render(renderer: GuiRenderer, mouseX: Int, mouseY: Int, delta: Float) {
+    renderer.subInstance(0F, 0F, width, height) {
+      super<GuiContainer>.render(renderer, mouseX, mouseY, delta)
+    }
   }
 
   /**
@@ -153,6 +155,7 @@ abstract class Screen(parent: Screen? = null) : KtxScreen, GuiContainer(parent) 
 
     this.width = Gdx.graphics.width.toFloat() / guiScale
     this.height = Gdx.graphics.height.toFloat() / guiScale
+    this.children.clear()
 
     setup()
   }
