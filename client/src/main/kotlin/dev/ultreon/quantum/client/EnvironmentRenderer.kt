@@ -29,6 +29,7 @@ import dev.ultreon.quantum.entity.PositionComponent
 import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.math.Vector3D
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.util.BlockHit
 import dev.ultreon.quantum.util.NamespaceID
 import dev.ultreon.quantum.vec3d
@@ -37,6 +38,31 @@ import ktx.assets.disposeSafely
 import ktx.math.vec3
 
 private val tmp1 = vec3()
+
+fun modelBatch() = ModelBatch(
+  if (gamePlatform.isWebGL3 || gamePlatform.isGL30 || gamePlatform.isGLES3) {
+    object : DefaultShaderProvider(
+      (quantum.clientResources require NamespaceID.of(path = "shaders/programs/default.vsh")).text,
+      (quantum.clientResources require NamespaceID.of(path = "shaders/programs/default.fsh")).text
+    ) {
+      override fun createShader(renderable: Renderable): Shader {
+        return DefaultShader(
+          renderable,
+          this.config,
+          "#version 300 es\n\n" + DefaultShader.createPrefix(renderable, config)
+        )
+      }
+    }
+  } else {
+    object : DefaultShaderProvider(
+      (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/default.vsh")).text,
+      (quantum.clientResources require NamespaceID.of(path = "shaders/programs/legacy/default.fsh")).text
+    ) {
+
+    }
+  },
+  DefaultRenderableSorter()
+)
 
 /**
  * Creates a new [ModelBatch] instance with the default shader provider and renderable sorter.

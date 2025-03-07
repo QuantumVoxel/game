@@ -17,6 +17,7 @@ import dev.ultreon.quantum.util.NamespaceID
  * The main logger for QuantumVoxel.
  */
 val logger = LoggerFactory["QuantumVoxel"]
+val json: Json = Json()
 
 /**
  * An instance of the [Json] class for parsing and serializing JSON.
