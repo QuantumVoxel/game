@@ -311,7 +311,6 @@ def publishProjects = [
 ]
 
 publishProjects.each { project ->
-    if (project.name == "android") return
     project.mkdir("build/jreleaser")
     project.apply plugin: "maven-publish"
     project.apply plugin: "java-library"
@@ -335,7 +334,7 @@ publishProjects.each { project ->
 
         jreleaser.release {
             github {
-                branch = "main"
+                branch = "channels/edge"
                 token = property("jreleaser.github.token")
             }
         }
@@ -353,22 +352,14 @@ publishProjects.each { project ->
             maven {
                 active = Active.ALWAYS
 
-//        nexus2 {
-//          create("maven-central") {
-//            active = Active.SNAPSHOT
-//            url = "https://s01.oss.sonatype.org/service/local"
-//            snapshotUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-//            closeRepository = true
-//            releaseRepository = true
-//            stagingRepository("build/staging-deploy")
-//          }
-//        }
-
                 mavenCentral {
                     create("sonatype") {
                         active = Active.ALWAYS
                         url = "https://central.sonatype.com/api/v1/publisher"
                         stagingRepository(projectDir.path + "/build/staging-deploy")
+
+                        username = property("jreleaser.deploy.maven.mavencentral.username")
+                        password = property("jreleaser.deploy.maven.mavencentral.password")
                     }
                 }
             }
