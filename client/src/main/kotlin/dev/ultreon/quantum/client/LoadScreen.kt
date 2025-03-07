@@ -14,6 +14,14 @@ import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.util.id
 
+/**
+ * The loading screen of the game.
+ * This screen is shown when the game is loading.
+ *
+ * @see QuantumVoxel.loaded
+ * @author Qubilux
+ * @constructor Creates a new LoadScreen.
+ */
 class LoadScreen : Screen() {
   private var loaded: Boolean = false
   private var crash: Array<StackTraceElement>? = null
@@ -26,6 +34,9 @@ class LoadScreen : Screen() {
       logger.info("Loading stage: $value")
     }
 
+  /**
+   * This function is called when the screen is shown.
+   */
   override fun show() {
     if (t != null) {
       logger.warn("LoadScreen was already initialized!")
@@ -51,12 +62,11 @@ class LoadScreen : Screen() {
         message = "Initializing..."
         QuantumVoxel {
           quantum.keyMovement = KeyMovement()
-          quantum.touchMovement = TouchMovement(null)
           quantum.controllerMovement = ControllerMovement()
 
           IdScreen.load(quantum.clientResources)
 
-          quantum.showScreen(IdScreen.get(id(path = "title")) ?: run {
+          quantum.showScreen(TitleScreen() ?: run {
             logger.error("Title screen not found")
             PlaceholderScreen
           })
@@ -76,10 +86,22 @@ class LoadScreen : Screen() {
     super.show()
   }
 
+  /**
+   * Sets up the screen (or re-sets it up).
+   * This function is called when the screen is shown or resized.
+   */
   override fun setup() {
     batch.projectionMatrix.setToOrtho2D(0f, 0f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
   }
 
+  /**
+   * This function is called every frame and is responsible for rendering the widget.
+   *
+   * @param renderer The renderer to render the widget with.
+   * @param mouseX The x position of the mouse.
+   * @param mouseY The y position of the mouse.
+   * @param delta The time in seconds since the last frame.
+   */
   override fun render(renderer: GuiRenderer, mouseX: Int, mouseY: Int, delta: Float) {
     if (crash != null) {
       var y = 0

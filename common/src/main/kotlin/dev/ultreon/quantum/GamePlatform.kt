@@ -4,7 +4,6 @@ import dev.ultreon.quantum.async.AsyncExecutor
 import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.network.BaseSocket
 import dev.ultreon.quantum.resource.ResourceManager
-import kotlin.system.exitProcess
 
 /**
  * Represents the platform that the game is running on.
@@ -19,8 +18,10 @@ interface GamePlatform {
 
   val isLinux: Boolean get() = false
 
+  @Deprecated("Not used anymore", ReplaceWith("false"))
   val isAndroid: Boolean get() = false
 
+  @Deprecated("Not used anymore", ReplaceWith("false"))
   val isIos: Boolean get() = false
 
   /**
@@ -124,15 +125,18 @@ interface GamePlatform {
    *
    * @since 0.0.2
    */
+  @Deprecated("Not used anymore", ReplaceWith("false"))
   val isMobile: Boolean get() = false
 
   /**
    * Handles next-frame logic. Useful for when a platform doesn't do something every frame that it should.
    */
+  @Deprecated("Not used anymore")
   fun nextFrame() {
 
   }
 
+  @Deprecated("Not used anymore")
   fun createClientSocket(asString: String): BaseSocket? {
     return null
   }
@@ -140,26 +144,31 @@ interface GamePlatform {
   /**
    * Returns `true` if the game is running on WebGL 3.0.
    */
+  @Deprecated("Not used anymore", ReplaceWith("false"))
   val isWebGL3: Boolean get() = false
 
   /**
    * Returns `true` if the game is running on WebGL 2.0.
    */
+  @Deprecated("Not used anymore", ReplaceWith("false"))
   val isWebGL2: Boolean get() = false
 
   /**
    * Returns `true` if the game is running using SwitchGDX backend.
    */
+  @Deprecated("Not used anymore", ReplaceWith("false"))
   val isSwitchGDX: Boolean get() = false
 
   /**
    * Returns `true` if the game is running on Switch.
    */
-  val isSwitch: Boolean get() = isSwitchGDX
+  @Deprecated("Not used anymore", ReplaceWith("false"))
+  val isSwitch: Boolean get() = false
 
   /**
    * Returns `true` if the game is running on UWP.
    */
+  @Deprecated("Not used anymore", ReplaceWith("false"))
   val isUWP: Boolean get() = false
 
   /**
@@ -174,14 +183,55 @@ interface GamePlatform {
    *
    * @since 0.0.2
    */
-  val isWeb: Boolean get() = isWebGL3 || isWebGL2
+  @Deprecated("Not used anymore", ReplaceWith("false"))
+  val isWeb: Boolean get() = false
 
+  /**
+   * Terminates the game immediately.
+   *
+   * @param i the exit status
+   */
+  @Deprecated("Not used anymore", ReplaceWith("Runtime.getRuntime().halt(i)", "java.lang.Runtime"))
   fun halt(i: Int)
+
+  /**
+   * Returns the number of CPU cores the device has.
+   *
+   * @return the number of CPU cores
+   */
+  @Deprecated("Not used anymore", ReplaceWith("Runtime.getRuntime().availableProcessors()", "java.lang.Runtime"))
   fun cpuCores(): Int
+
+  /**
+   * Yields the current thread.
+   */
+  @Deprecated("Not used anymore", ReplaceWith("Thread.yield()", "java.lang.Thread"))
   fun yield()
 
+  /**
+   * Creates an [AsyncExecutor] with the specified number of max concurrent threads.
+   *
+   * @param maxConcurrent the max number of concurrent threads
+   * @param name the name of the thread
+   * @return the created [AsyncExecutor]
+   */
+  @Deprecated("Not used anymore", ReplaceWith("AsyncExecutor(maxConcurrent, name)", "com.badlogic.gdx.utils.async.AsyncExecutor"))
   fun createAsyncExecutor(maxConcurrent: Int, name: String = "AsyncExecutor-Thread"): AsyncExecutor
+
+  /**
+   * Pauses the current thread for a specified duration.
+   *
+   * @param i the duration in milliseconds to sleep
+   */
+  @Deprecated("Not used anymore")
   fun sleep(i: Int)
+
+  /**
+   * Creates a new instance of [Future].
+   *
+   * @return a new [Future] instance
+   */
+  @Deprecated("Not used anymore", ReplaceWith("CompletableFuture()", "java.util.concurrent.CompletableFuture"))
   fun <T> createFuture(): Future<T>
 }
 

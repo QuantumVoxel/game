@@ -5,6 +5,12 @@ import dev.ultreon.quantum.resource.Resource
 import dev.ultreon.quantum.resource.ResourceCategory
 import dev.ultreon.quantum.resource.StaticResource
 
+/**
+ * The `textures` resource category.
+ *
+ * @param textureManager The texture manager.
+ * @constructor Creates a new textures category.
+ */
 class TexturesCategory(val textureManager: TextureManager) : ResourceCategory {
   private val categories: MutableMap<String, TextureCategory> = mutableMapOf()
   override val parent: ResourceCategory? = null

@@ -1,20 +1,31 @@
 package dev.ultreon.quantum.client.gui.screens
 
+import dev.ultreon.quantum.InternalApi
 import dev.ultreon.quantum.client.globalBatch
+import dev.ultreon.quantum.client.gui.widget.Text
+import dev.ultreon.quantum.client.gui.widget.button.TextButton
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.client.scripting.ClientContextTypes
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.resource.*
 import dev.ultreon.quantum.scripting.condition.VirtualCondition
 import dev.ultreon.quantum.scripting.function.CallContext
-import dev.ultreon.quantum.scripting.ContextType
 import dev.ultreon.quantum.scripting.ContextValue
 import dev.ultreon.quantum.util.NamespaceID
 import kotlin.reflect.KProperty
 
+/**
+ * Represents a screen identified by a NamespaceID.
+ *
+ * @property screenId The ID of the screen.
+ */
+@OptIn(InternalApi::class)
 class IdScreen(screenId: NamespaceID) : Screen() {
   private val batch = globalBatch
 
+  /**
+   * The screen ID with the path mapped to a specific format.
+   */
   val screenId = screenId.mapPath { path ->
     return@mapPath path.substringAfter("gui/screens/").substringBeforeLast('.')
   }
@@ -103,6 +114,9 @@ class IdScreen(screenId: NamespaceID) : Screen() {
     }
   }
 
+  /**
+   * Sets up the screen.
+   */
   override fun setup() {
 
   }
@@ -110,14 +124,30 @@ class IdScreen(screenId: NamespaceID) : Screen() {
   companion object {
     private val screens = HashMap<NamespaceID, IdScreen>()
 
+    /**
+     * Adds a screen to the collection.
+     *
+     * @param screen The screen to add.
+     */
     fun add(screen: IdScreen) {
       screens[screen.screenId] = screen
     }
 
+    /**
+     * Retrieves a screen by its ID.
+     *
+     * @param screenId The ID of the screen to retrieve.
+     * @return The screen with the specified ID, or null if not found.
+     */
     fun get(screenId: NamespaceID): IdScreen? {
       return screens[screenId]
     }
 
+    /**
+     * Loads screens from the client resources.
+     *
+     * @param clientResources The resource manager containing the client resources.
+     */
     fun load(clientResources: ResourceManager) {
       clientResources["gui"]?.asDirOrNull()?.let { dir ->
         dir["screens"]?.asDirOrNull()?.asDirectoryOrNull()?.walk { resource ->
@@ -133,12 +163,30 @@ class IdScreen(screenId: NamespaceID) : Screen() {
   }
 }
 
+/**
+ * Represents a property that retrieves a screen by its ID.
+ *
+ * @property screenId The ID of the screen.
+ */
 class ScreenProperty(val screenId: NamespaceID) {
   operator fun getValue(thisRef: Any?, property: KProperty<*>): Screen {
     return IdScreen.get(screenId) ?: throw IllegalStateException("Screen not found: $screenId")
   }
 }
 
+/**
+ * Creates a ScreenProperty for the specified screen ID.
+ *
+ * @param screenId The ID of the screen.
+ * @return The ScreenProperty for the specified screen ID.
+ */
 fun screen(screenId: NamespaceID) = ScreenProperty(screenId)
 
+/**
+ * Creates a ScreenProperty for the specified namespace and path.
+ *
+ * @param namespace The namespace of the screen.
+ * @param path The path of the screen.
+ * @return The ScreenProperty for the specified namespace and path.
+ */
 fun screen(namespace: String = "quantum", path: String) = screen(NamespaceID(namespace, path))

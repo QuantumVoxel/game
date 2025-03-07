@@ -1,7 +1,9 @@
 package dev.ultreon.quantum.network
 
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.InternalApi
 
+@ExperimentalApi
 class PacketCollection(val name: String, val id: Int, val builder: PacketCollector.() -> Unit) {
   val packetToClient = PacketRegistry()
   val packetToServer = PacketRegistry()
@@ -12,6 +14,7 @@ class PacketCollection(val name: String, val id: Int, val builder: PacketCollect
 }
 
 @OptIn(InternalApi::class)
+@ExperimentalApi
 class PacketCollector(@property:InternalApi val collection: PacketCollection) {
   fun <T : Any> registerClientEndpoint(
     id: Int,

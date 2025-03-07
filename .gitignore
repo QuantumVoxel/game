@@ -14,6 +14,7 @@ gradle-app.setting
 /server/build/
 /common/build/
 /shared/build/
+/gameprovider/build/
 
 ## Java:
 *.class
@@ -297,3 +298,21 @@ Thumbs.db
 /lwjgl3/libEGL.dylib
 /lwjgl3/libGLESv2.dylib
 /lwjgl3/content-packs/
+/gameprovider/build/kotlin/compileKotlin/local-state/build-history.bin
+/gameprovider/build/resources/main/assets/craft-fabric/icon.pdn
+/gameprovider/build/resources/main/assets/craft-fabric/icon.png
+/gameprovider/build/resources/main/META-INF/services/net.fabricmc.loader.impl.game.GameProvider
+/gameprovider/build/resources/main/versions.properties
+/gameprovider/build/tmp/compileJava/compileTransaction/stash-dir/Lwjgl3Logger.class.uniqueId0
+/gameprovider/build/tmp/compileJava/compileTransaction/stash-dir/QuantumVxlLogHandler$1.class.uniqueId2
+/gameprovider/build/tmp/compileJava/compileTransaction/stash-dir/QuantumVxlLogHandler.class.uniqueId1
+/gameprovider/build/tmp/compileJava/previous-compilation-data.bin
+/gameprovider/build/libs/quantum-common-0.0.3.jar
+/gameprovider/build/libs/quantum-common-0.0.5.jar
+/gameprovider/build/libs/quantum-common-0.0.5-SNAPSHOT.jar
+/gameprovider/build/publications/maven/module.json
+/gameprovider/build/publications/maven/pom-default.xml
+/gameprovider/build/tmp/compileJava/compileTransaction/stash-dir/QuantumVxlGameProvider.class.uniqueId0
+/gameprovider/build/tmp/jar/MANIFEST.MF
+/gameprovider/build/tmp/publishMavenPublicationToMavenRepository/module-maven-metadata.xml
+/gameprovider/build/tmp/publishMavenPublicationToMavenRepository/snapshot-maven-metadata.xml

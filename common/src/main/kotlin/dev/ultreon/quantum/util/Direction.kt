@@ -1,7 +1,7 @@
 package dev.ultreon.quantum.util
 
 import com.badlogic.gdx.math.Vector3
-import dev.ultreon.quantum.ExperimentalQuantumApi
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.math.Axis
 import dev.ultreon.quantum.math.Vector3D
 import dev.ultreon.quantum.math.opposite
@@ -76,7 +76,7 @@ enum class Direction(val normal: Vector3) {
   val isPositive: Boolean
     get() = !isNegative
 
-  @ExperimentalQuantumApi
+  @ExperimentalApi
   fun counterClockwise(axis: Axis): Direction {
     return clockwise(axis.opposite())
   }

@@ -544,6 +544,27 @@ fun MeshPartBuilder.northFace(
   rect(v10, v00, v01, v11)
 }
 
+/**
+ * This method creates a quad at the given position with the specified width and height.
+ *
+ * A quad is a 2D representation of a square with four vertices.
+ * These vertices are connected in a counterclockwise order, forming two triangles.
+ * Quads are commonly used to represent flat surfaces in 3D environments, such as walls, floors, and ceilings.
+ * The texture coordinates of the vertices are aligned such that the top left corner of the quad is at
+ * (0, 0) and the bottom right corner is at (1, 1).
+ *
+ * By representing a quad as two triangles, this method takes advantage of the GPUs optimized triangle rendering.
+ * Most GPUs are optimized for rendering triangles, as they are the most basic shape in 3D graphics.
+ * GPUs can render triangles much faster than other shapes,
+ * so this method takes advantage of that to make the rendering process more efficient.
+ *
+ * @param x The x-coordinate of the quad's position.
+ * @param y The y-coordinate of the quad's position.
+ * @param z The z-coordinate of the quad's position.
+ * @param width The width of the quad.
+ * @param height The height of the quad.
+ * @param textureRegion The texture region to apply to the quad.
+ */
 fun MeshPartBuilder.quad(
   x: Float = 0f,
   y: Float = 0f,
@@ -580,12 +601,25 @@ fun MeshPartBuilder.quad(
   triangle(v10, v01, v11)
 }
 
+/**
+ * Creates a new [PerspectiveCamera] instance with the provided initialization block.
+ *
+ * @param init An optional initialization block for the [PerspectiveCamera].
+ * @return A new [PerspectiveCamera] instance based on the provided initialization block.
+ */
 fun perspectiveCamera(init: PerspectiveCamera.() -> Unit = {}): PerspectiveCamera {
   val camera = PerspectiveCamera()
   camera.init()
   return camera
 }
 
+/**
+ * Creates a new [ModelInstance] based on the provided [Model] and optional initialization block.
+ *
+ * @param model The [Model] to create the instance from.
+ * @param init An optional initialization block for the [ModelInstance].
+ * @return A new [ModelInstance] instance based on the provided [Model] and initialization block.
+ */
 fun instance(model: Model, init: ModelInstance.() -> Unit = {}): ModelInstance {
   val instance = ModelInstance(model)
   instance.init()
@@ -596,18 +630,16 @@ private var tmpVecD = vec3d(0.0, 0.0, 0.0)
 internal var tmpVec = vec3(0F, 0F, 0F)
 
 /**
- * Adjusts the `ModelInstance`'s position relative to the given `Camera` and `Vector3D` position.
+ * Adjusts the transformation of the [ModelInstance] to be relative to the specified position.
+ * This method computes the relative position between the current position of the model and the target position.
+ * The transformation is then adjusted to ensure the model is positioned relative to the target.
+ * The updated [ModelInstance] is returned for further use.
  *
- * This function modifies the translation of the `ModelInstance`'s transformation matrix
- * by calculating the difference between the specified `position` and the `camera`'s current position.
- * The resulting translation ensures the `ModelInstance` is positioned correctly in relation to the camera and the target position.
+ * This method is useful for aligning models to a specific position in the world without causing floating point errors.
  *
- * The reason this is used is to prevent mesh tearing issues due to floating point precision on large distances.
- *
- * @receiver The `ModelInstance` whose transformation will be adjusted.
- * @param camera The camera used to determine the reference position for the adjustment.
- * @param position The target `Vector3D` position used to compute the relative position.
- * @return The updated `ModelInstance` with adjusted transformation.
+ * @receiver The [ModelInstance] whose transformation will be adjusted.
+ * @param position The target [Vector3D] position used to compute the relative position.
+ * @return The same [ModelInstance] instance for further use.
  */
 fun ModelInstance.relative(position: Vector3D): ModelInstance {
   this.transform.setTranslation(-(tmpVecD.set(position.x, position.y, position.z).sub(vec3d()).let {
@@ -616,6 +648,14 @@ fun ModelInstance.relative(position: Vector3D): ModelInstance {
   return this
 }
 
+/**
+ * Draws the text using the provided [Font] and [SpriteBatch] at the specified coordinates.
+ * This also adds a shadow effect to the text.
+ *
+ * @param spriteBatch The [SpriteBatch] to use for drawing the text.
+ * @param text The text to be drawn.
+ * @param x The x-coordinate of the text position.
+ */
 fun Font.draw(spriteBatch: SpriteBatch, text: String, x: Float, y: Float) {
   spriteBatch.color = Color.LIGHT_GRAY
   this.drawMarkupText(spriteBatch, text, x, y-1)
@@ -623,6 +663,11 @@ fun Font.draw(spriteBatch: SpriteBatch, text: String, x: Float, y: Float) {
   this.drawMarkupText(spriteBatch, text, x, y)
 }
 
+/**
+ * Creates and returns a new [SpriteBatch] instance for the current platform.
+ *
+ * @return A new [SpriteBatch] instance.
+ */
 fun spriteBatch(): SpriteBatch {
   if (gamePlatform.isWebGL3) {
     fun createDefaultShader(): ShaderProgram {

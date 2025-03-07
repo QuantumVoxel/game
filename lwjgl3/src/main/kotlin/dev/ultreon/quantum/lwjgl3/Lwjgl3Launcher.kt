@@ -3,12 +3,13 @@
 package dev.ultreon.quantum.lwjgl3
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration
 import com.badlogic.gdx.utils.Os
 import com.badlogic.gdx.utils.SharedLibraryLoader
 import dev.ultreon.quantum.*
 import dev.ultreon.quantum.async.AsyncExecutor
 import dev.ultreon.quantum.async.Future
-import dev.ultreon.quantum.client.*
+import dev.ultreon.quantum.client.QuantumVoxel
 import dev.ultreon.quantum.resource.ResourceManager
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
@@ -56,22 +57,12 @@ fun main() {
 
   try {
     when (SharedLibraryLoader.os) {
-//      Os.MacOsX -> {
-//        MetalApp(quantum, MetalConfig().apply {
-//          setTitle("Quantum Voxel")
-//          setWindowedMode(MINIMUM_WIDTH * 2, MINIMUM_HEIGHT * 2)
-//          setOpenGLEmulation(MetalConfig.GLEmulation.ANGLE_GLES32, 2, 0)
-//          setWindowIcon(*(arrayOf(128, 64, 32, 16).map { "libgdx$it.png" }.toTypedArray()))
-//          setBackBufferConfig(4, 4, 4, 4, 8, 8, 0)
-//        })
-//      }
-
       Os.Windows -> {
         gamePlatform = OpenGLPlatform(logger)
 
         OpenGLApp(QuantumVoxel(), OpenGLConfig().apply {
           setTitle("Quantum Voxel")
-          setWindowedMode(MINIMUM_WIDTH * 3 - 2, MINIMUM_HEIGHT * 3 - 2)
+//          setFullscreenMode(Lwjgl3ApplicationConfiguration.getDisplayMode())
           setForegroundFPS(0)
           useVsync(false)
           setOpenGLEmulation(OpenGLConfig.GLEmulation.GL32, 3, 2)
@@ -91,9 +82,10 @@ fun main() {
 
         OpenGLApp(QuantumVoxel(), OpenGLConfig().apply {
           setTitle("Quantum Voxel")
-          setWindowedMode(MINIMUM_WIDTH * 3 - 2, MINIMUM_HEIGHT * 3 - 2)
           setForegroundFPS(0)
           useVsync(false)
+          setWindowedMode(1280, 720)
+//          setFullscreenMode(Lwjgl3ApplicationConfiguration.getDisplayMode())
           setWindowIcon(*(arrayOf(128, 64, 32, 16).map { "libgdx$it.png" }.toTypedArray()))
           setBackBufferConfig(4, 4, 4, 4, 8, 8, 0)
         })
@@ -104,7 +96,7 @@ fun main() {
 
         OpenGLApp(QuantumVoxel(), OpenGLConfig().apply {
           setTitle("Quantum Voxel")
-          setWindowedMode(MINIMUM_WIDTH * 3 - 2, MINIMUM_HEIGHT * 3 - 2)
+          setFullscreenMode(Lwjgl3ApplicationConfiguration.getDisplayMode())
           setForegroundFPS(0)
           useVsync(false)
           setOpenGLEmulation(OpenGLConfig.GLEmulation.GL32, 3, 2)
@@ -119,22 +111,8 @@ fun main() {
 }
 
 abstract class DesktopPlatform(val logger: Logger) : GamePlatform {
-  override fun loadResources(resourceManager: ResourceManager) {
-//      try {
-//        // Locate resource "_assetroot" and use its parent directory as the root
-//        val resource = QuantumVoxel::class.java.classLoader.getResource("_assetroot")
-//        val path = resource?.toURI()?.toPath()?.parent ?: throw FileNotFoundException("Asset root not found")
-//        resourceManager.load(Gdx.files.absolute(path.toString()))
-//
-//      } catch (e: Exception) {
-//        ZipInputStream(QuantumVoxel::class.java.getResourceAsStream("/quantum.zip")?.buffered()
-//                ?: Files.newInputStream(Paths.get("quantum.zip")).buffered()).use {
-//          resourceManager.loadZip(it)
-//        }
-//      }
-
+  override fun loadResources(resourceManager: ResourceManager) =
     resourceManager.loadFromAssetsTxt(Gdx.files.internal("assets.txt"))
-  }
 
   override val isDesktop: Boolean
     get() = true
@@ -151,22 +129,30 @@ abstract class DesktopPlatform(val logger: Logger) : GamePlatform {
   override val isDebug: Boolean
     get() = ManagementFactory.getRuntimeMXBean().inputArguments.any { "jdwp" in it || "-Xdebug" in it || "-Xrunjdwp" in it }
 
+  @Deprecated(
+    "Not used anymore",
+    replaceWith = ReplaceWith("Runtime.getRuntime().availableProcessors()", "java.lang.Runtime")
+  )
   override fun cpuCores(): Int {
     return Runtime.getRuntime().availableProcessors()
   }
 
+  @Deprecated("Not used anymore", replaceWith = ReplaceWith("Thread.yield()", "java.lang.Thread"))
   override fun yield() {
     Thread.yield()
   }
 
+  @Deprecated("Not used anymore", replaceWith = ReplaceWith("Thread.sleep(i.toLong())"))
   override fun sleep(i: Int) {
     Thread.sleep(i.toLong())
   }
 
+  @Deprecated("Not used anymore", replaceWith = ReplaceWith("Runtime.getRuntime().halt(i)", "java.lang.Runtime"))
   override fun halt(i: Int) {
     Runtime.getRuntime().halt(i)
   }
 
+  @Deprecated("Not used anymore", replaceWith = ReplaceWith("false"))
   override val isMobile: Boolean
     get() = false
 
@@ -187,10 +173,18 @@ abstract class DesktopPlatform(val logger: Logger) : GamePlatform {
       }
   }
 
+  @Deprecated(
+    "Not used anymore",
+    replaceWith = ReplaceWith("AsyncExecutor(maxConcurrent, name)", "com.badlogic.gdx.utils.async.AsyncExecutor")
+  )
   override fun createAsyncExecutor(maxConcurrent: Int, name: String): AsyncExecutor {
     return Lwjgl3AsyncExecutor(maxConcurrent, name)
   }
 
+  @Deprecated(
+    "Not used anymore",
+    replaceWith = ReplaceWith("CompletableFuture()", "java.util.concurrent.CompletableFuture")
+  )
   override fun <T> createFuture(): Future<T> {
     return Lwjgl3Future()
   }

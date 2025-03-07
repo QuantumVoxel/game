@@ -19,6 +19,11 @@ import kotlin.math.sign
 import kotlin.random.Random
 import kotlin.random.nextInt
 
+/**
+ * A renderer for the title screen background.
+ *
+ * @author <a href="https://github.com/XyperCode">Qubilux</a>
+ */
 class BackgroundRenderer : Disposable {
   private val tmp: Vector3D = vec3d()
   private val camera = perspectiveCamera {

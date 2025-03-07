@@ -7,13 +7,16 @@ import com.badlogic.gdx.graphics.g3d.Material
 import com.badlogic.gdx.utils.GdxRuntimeException
 import com.badlogic.gdx.utils.JsonReader
 import com.badlogic.gdx.utils.JsonValue
-import dev.ultreon.quantum.ExperimentalQuantumApi
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.resource.Resource
 import ktx.assets.disposeSafely
 import java.nio.charset.Charset
 
 private val jsonReader = JsonReader()
 
+/**
+ * Opens the resource as a [Texture].
+ */
 fun Resource.texture(): Texture {
   val pixmap = pixmap()
   val texture = Texture(pixmap)
@@ -22,12 +25,34 @@ fun Resource.texture(): Texture {
   return texture
 }
 
+/**
+ * Opens the resource as a [Pixmap].
+ */
 fun Resource.pixmap(): Pixmap = Pixmap(data, 0, data.size)
+
+/**
+ * Opens the resource as a [String].
+ *
+ * @param charset The character set to use when decoding the resource.
+ */
 fun Resource.text(charset: Charset = Charsets.UTF_8): String = String(data, charset)
+
+/**
+ * Opens the resource as a [JsonValue].
+ */
 fun Resource.json(): JsonValue = jsonReader.parse(text())
+
+/**
+ * Opens the resource as a [JsonValue].
+ *
+ * @param charset The character set to use when decoding the resource.
+ */
 fun Resource.json(charset: Charset): JsonValue = jsonReader.parse(text(charset))
 
-@ExperimentalQuantumApi
+/**
+ * Opens the resource as a [Material].
+ */
+@ExperimentalApi
 fun Resource.material(): Material {
   val json = json()
 
