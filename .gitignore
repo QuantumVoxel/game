@@ -14,7 +14,7 @@ gradle-app.setting
 /server/build/
 /common/build/
 /shared/build/
-/gameproviders/build/
+/gameprovider/build/
 
 ## Java:
 *.class
