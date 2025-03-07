@@ -59,6 +59,9 @@ import dev.ultreon.quantum.util.NamespaceID
 import ktx.app.*
 import ktx.assets.disposeSafely
 import ktx.async.MainDispatcher
+import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.api.ModInitializer
+import net.fabricmc.loader.api.FabricLoader
 import space.earlygrey.shapedrawer.ShapeDrawer
 import java.util.zip.ZipInputStream
 import kotlin.math.min
@@ -255,6 +258,9 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
    */
   override fun create() {
     super.create()
+
+    FabricLoader.getInstance().invokeEntrypoints("client", ClientModInitializer::class.java) { it.onInitializeClient() }
+    FabricLoader.getInstance().invokeEntrypoints("main", ModInitializer::class.java) { it.onInitialize() }
 
     MainDispatcher.initiate()
 

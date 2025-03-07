@@ -1,9 +1,11 @@
 package dev.ultreon.quantum.dedicated
 
 import com.badlogic.gdx.ApplicationListener
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.network.Networker
 import dev.ultreon.quantum.server.QuantumVoxelServer
 
+@ExperimentalApi
 class DedicatedServer : QuantumVoxelServer(), ApplicationListener {
   override lateinit var networker: Networker
   override val isDedicatedServer: Boolean = true
