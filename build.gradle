@@ -107,129 +107,12 @@ subprojects {
         }
     }
 
-    if (name != 'android') {
-        apply plugin: 'maven-publish'
-
-        publishing {
-            publications {
-                maven(MavenPublication) {
-                    from(components.java)
-                }
-            }
-
-            repositories {
-                maven {
-                    url = uri("https://maven.pkg.github.com/QuantumVoxel/game")
-                    credentials {
-                        username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-                        password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
-                    }
-                }
-            }
-        }
+    java {
+        withSourcesJar()
     }
 }
 
 eclipse.project.name = 'QuantumVoxel' + '-parent'
-
-tasks.register('generateBindings', JavaExec) {
-    classpath = files(project(":client").jar.outputs.files + project(":common").jar.outputs.files + project(":server").jar.outputs.files
-            + project(":client").sourceSets.main.runtimeClasspath + project(":common").sourceSets.main.runtimeClasspath + project(":server").sourceSets.main.runtimeClasspath
-            + project(":generator").sourceSets.main.runtimeClasspath)
-    mainClass = 'dev.ultreon.langgen.Main'
-    args = ['--js', '--stub', '--output=' + file("modules/quantum")]
-
-    inputs.files(project(":client").sourceSets.main.java.srcDirs, project(":common").sourceSets.main.java.srcDirs, project(":server").sourceSets.main.java.srcDirs)
-    outputs.dir(file("modules/quantum"))
-
-    group = 'build'
-    description = 'Generate bindings'
-
-    finalizedBy('compileTypescript')
-
-    dependsOn(':client:compileJava', ':common:compileJava', ':server:compileJava', ':generator:compileJava')
-    dependsOn(':client:compileKotlin', ':common:compileKotlin', ':server:compileKotlin', ':generator:compileKotlin')
-    dependsOn(':client:processResources', ':common:processResources', ':server:processResources', ':generator:processResources')
-    dependsOn(':client:jar', ':common:jar', ':server:jar')
-    project(":lwjgl3").processResources.dependsOn generateBindings
-}
-
-tasks.register('compileTypescript'/*, Exec*/) {
-    doFirst {
-        println("Hello")
-    }
-//  group = 'build'
-//  description = 'Compile typescript'
-//
-//  inputs.files(fileTree("modules/quantum").include("**/*.mts"))
-//  outputs.upToDateWhen { false }
-//  outputs.files(fileTree("dist/quantum").include("**/*.mjs"))
-//
-//  if (System.getProperty('os.name').toLowerCase().contains('windows')) {
-//    commandLine 'cmd', '/c', 'npm', 'run', 'build'
-//  } else {
-//    commandLine 'bash', '-c', 'npm run build'
-//  }
-//  workingDir file('modules/quantum')
-//
-//  dependsOn('generateBindings')
-}
-
-tasks.register('packageQuantumJS', Zip) {
-    group = 'build'
-    description = 'Package Quantum.JS module'
-
-    from(fileTree("dist/quantum").include("**/*.mjs"))
-    outputs.upToDateWhen { false }
-
-    archiveFileName = 'quantum.zip'
-    destinationDirectory = file('build/modules/internal')
-
-    dependsOn('compileTypescript')
-}
-
-afterEvaluate {
-    project(":lwjgl3").processResources.dependsOn packageQuantumJS
-//    project(":switchgdx").processResources.dependsOn packageQuantumJS
-//    project(":android").tasks.withType(LinkApplicationAndroidResourcesTask).collect { it.dependsOn packageQuantumJS }
-//    project(":android").tasks.withType(LinkApplicationAndroidResourcesTask).collect { it.dependsOn packageQuantumJS }
-//    project(":ios").processResources.dependsOn packageQuantumJS
-}
-
-//dokka {
-//    moduleName.set("Quantum Voxel")
-//
-//    dokkaSourceSets {
-//        configureEach {
-//            skipEmptyPackages.set(true)
-//        }
-//        create("common") {
-//            displayName.set("Common")
-//            sourceRoots.from("common/src/main/kotlin")
-//            s
-//        }
-//        create("client") {
-//            displayName.set("Client")
-//            sourceRoots.from("client/src/main/kotlin")
-//            sourceRoots.from("client/src/main/java")
-//        }
-//        create("server") {
-//            displayName.set("Server")
-//            sourceRoots.from("server/src/main/kotlin")
-//            sourceRoots.from("server/src/main/java")
-//        }
-//        create("lwjgl3") {
-//            displayName.set("LWJGL3")
-//            sourceRoots.from("lwjgl3/src/main/kotlin")
-//            sourceRoots.from("lwjgl3/src/main/java")
-//        }
-//        create("gameprovider") {
-//            displayName.set("Game Provider")
-//            sourceRoots.from("gameprovider/src/main/kotlin")
-//            sourceRoots.from("gameprovider/src/main/java")
-//        }
-//    }
-//}
 
 // Configure dokka to include the client and server source sets
 tasks.withType(DokkaTask) {
@@ -310,139 +193,141 @@ def publishProjects = [
         project(":gameprovider")
 ]
 
-publishProjects.each { project ->
-    project.mkdir("build/jreleaser")
-    project.apply plugin: "maven-publish"
-    project.apply plugin: "java-library"
-    project.apply plugin: "org.jreleaser"
+if (System.getenv("CI") != "true") {
+    publishProjects.each { project ->
+        project.mkdir("build/jreleaser")
+        project.apply plugin: "maven-publish"
+        project.apply plugin: "java-library"
+        project.apply plugin: "org.jreleaser"
 
-    project.extensions.configure(JReleaserExtension) { jreleaser ->
-        jreleaser.project {
-            group = "dev.ultreon.quantum"
-            authors = ["Qubilux"]
-            license = "Ultreon-PSL-1.0"
-            description =
-                    "Quantum Voxel is a voxel game that focuses on technology based survival (currently in development)."
-            copyright = "(C) Copyright 2023 Quinten Jungblut. All rights reserved."
-            links {
-                homepage = "https://ultreon.dev"
+        project.extensions.configure(JReleaserExtension) { jreleaser ->
+            jreleaser.project {
+                group = "dev.ultreon.quantum"
+                authors = ["Qubilux"]
+                license = "Ultreon-PSL-1.0"
+                description =
+                        "Quantum Voxel is a voxel game that focuses on technology based survival (currently in development)."
+                copyright = "(C) Copyright 2023 Quinten Jungblut. All rights reserved."
+                links {
+                    homepage = "https://ultreon.dev"
+                }
+                inceptionYear = "2023"
             }
-            inceptionYear = "2023"
-        }
 
-        jreleaser.gitRootSearch = true
+            jreleaser.gitRootSearch = true
 
-        jreleaser.release {
-            github {
-                branch = "channels/edge"
-                token = property("jreleaser.github.token")
+            jreleaser.release {
+                github {
+                    branch = "channels/edge"
+                    token = property("jreleaser.github.token")
+                }
             }
-        }
 
-        jreleaser.signing {
-            active = 'ALWAYS'
-            armored = true
-            mode = 'FILE'
-            publicKey = '~/public1.pgp'
-            secretKey = '~/private1.pgp'
-            passphrase = property("jreleaser.gpg.passphrase")
-        }
+            jreleaser.signing {
+                active = 'ALWAYS'
+                armored = true
+                mode = 'FILE'
+                publicKey = '~/public1.pgp'
+                secretKey = '~/private1.pgp'
+                passphrase = property("jreleaser.gpg.passphrase")
+            }
 
-        jreleaser.deploy {
-            maven {
-                active = Active.ALWAYS
+            jreleaser.deploy {
+                maven {
+                    active = Active.ALWAYS
 
-                mavenCentral {
-                    create("sonatype") {
-                        active = Active.ALWAYS
-                        url = "https://central.sonatype.com/api/v1/publisher"
-                        stagingRepository(projectDir.path + "/build/staging-deploy")
+                    mavenCentral {
+                        create("sonatype") {
+                            active = Active.ALWAYS
+                            url = "https://central.sonatype.com/api/v1/publisher"
+                            stagingRepository(projectDir.path + "/build/staging-deploy")
 
-                        username = property("jreleaser.deploy.maven.mavencentral.username")
-                        password = property("jreleaser.deploy.maven.mavencentral.password")
+                            username = property("jreleaser.deploy.maven.mavencentral.username")
+                            password = property("jreleaser.deploy.maven.mavencentral.password")
+                        }
                     }
                 }
             }
         }
-    }
 
-    project.publishing {
-        repositories {
-            maven {
-                name = "Staging"
-                url = uri("file://${projectDir.path.replace("\\", "/")}/build/staging-deploy")
+        project.publishing {
+            repositories {
+                maven {
+                    name = "Staging"
+                    url = uri("file://${projectDir.path.replace("\\", "/")}/build/staging-deploy")
+                }
             }
-        }
 
-        publications {
-            create(MavenPublication) { publication ->
-                from(project.components["java"])
+            publications {
+                create(MavenPublication) { publication ->
+                    from(project.components["java"])
 
-                groupId = "dev.ultreon.quantum"
-                artifactId = "quantum-${project.name}-v2"
-                version = projectVersion
+                    groupId = "dev.ultreon.quantum"
+                    artifactId = "quantum-${project.name}-v2"
+                    version = projectVersion
 
-                pom {
-                    name = "QuantumVoxel V2"
-                    description = "Quantum Voxel: Recomputed is a voxel game that focuses on technology based survival."
+                    pom {
+                        name = "QuantumVoxel V2"
+                        description = "Quantum Voxel: Recomputed is a voxel game that focuses on technology based survival."
 
-                    url = "https://github.com/QuantumVoxel/game"
-                    inceptionYear = "2024"
-
-                    developers {
-                        developer {
-                            id = "XyperCode"
-                            name = "Qubilux"
-
-                            organization = "Ultreon"
-                            organizationUrl = "https://ultreon.dev/"
-
-                            roles = ["Owner", "Maintainer"]
-
-                            url = "https://github.com/XyperCode"
-                        }
-                    }
-
-                    organization {
-                        name = "Ultreon"
-                        url = "https://ultreon.dev/"
-                    }
-
-                    issueManagement {
-                        system = "GitHub"
-                        url = "https://github.com/QuantumVoxel/game/issues"
-                    }
-
-                    scm {
                         url = "https://github.com/QuantumVoxel/game"
-                        connection = "scm:git:git://github.com/Ultreon/quantum.git"
-                    }
+                        inceptionYear = "2024"
 
-                    licenses {
-                        license {
-                            name = "Apache-2.0"
-                            url = "https://github.com/QuantumVoxel/game/blob/main/LICENSE"
-                        }
-                    }
+                        developers {
+                            developer {
+                                id = "XyperCode"
+                                name = "Qubilux"
 
-                    contributors {
-                        contributor {
-                            name = "Qubilux"
-                            url = "https://github.com/XyperCode"
+                                organization = "Ultreon"
+                                organizationUrl = "https://ultreon.dev/"
 
-                            roles = ["Author", "Developer"]
+                                roles = ["Owner", "Maintainer"]
+
+                                url = "https://github.com/XyperCode"
+                            }
                         }
 
-                        contributor {
-                            name = "MincraftEinstein"
-                            url = "https://github.com/MincraftEinstein"
-
-                            roles = ["Tester", "Modeler"]
+                        organization {
+                            name = "Ultreon"
+                            url = "https://ultreon.dev/"
                         }
 
-                        contributor {
-                            name = "guinea7pig"
-                            url = "https://github.com/guinea7pig"
+                        issueManagement {
+                            system = "GitHub"
+                            url = "https://github.com/QuantumVoxel/game/issues"
+                        }
+
+                        scm {
+                            url = "https://github.com/QuantumVoxel/game"
+                            connection = "scm:git:git://github.com/Ultreon/quantum.git"
+                        }
+
+                        licenses {
+                            license {
+                                name = "Apache-2.0"
+                                url = "https://github.com/QuantumVoxel/game/blob/main/LICENSE"
+                            }
+                        }
+
+                        contributors {
+                            contributor {
+                                name = "Qubilux"
+                                url = "https://github.com/XyperCode"
+
+                                roles = ["Author", "Developer"]
+                            }
+
+                            contributor {
+                                name = "MincraftEinstein"
+                                url = "https://github.com/MincraftEinstein"
+
+                                roles = ["Tester", "Modeler"]
+                            }
+
+                            contributor {
+                                name = "guinea7pig"
+                                url = "https://github.com/guinea7pig"
+                            }
                         }
                     }
                 }
