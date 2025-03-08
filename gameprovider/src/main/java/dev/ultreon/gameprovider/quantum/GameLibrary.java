@@ -19,7 +19,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.impl.game.LibClassifier.LibraryType;
 
 public enum GameLibrary implements LibraryType {
-  QUANTUM_VXL_LWJGL3(EnvType.CLIENT, "dev/ultreon/quantum/lwjgl3/Lwjgl3Launcher.class"),
+  QUANTUM_VXL_LWJGL3(EnvType.CLIENT, "dev/ultreon/quantum/lwjgl3/FabricGameLauncher.class"),
   QUANTUM_VXL_CLIENT(EnvType.CLIENT, "dev/ultreon/quantum/client/QuantumVoxel.class"),
   QUANTUM_VXL_COMMOn("dev/ultreon/quantum/server/QuantumVoxelServer.class"),
   QUANTUM_VXL_DEDICATED_SERVER(EnvType.SERVER, "dev/ultreon/quantum/dedicated/HeadlessLauncher.class"),
