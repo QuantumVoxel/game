@@ -3,8 +3,6 @@ package dev.ultreon.quantum.lwjgl3
 import dev.ultreon.quantum.Logger
 import dev.ultreon.quantum.LoggerFactory
 import java.lang.ref.Cleaner
-import java.nio.file.Files
-import kotlin.io.path.Path
 
 private val cleaner = Cleaner.create()
 
@@ -30,7 +28,5 @@ object Lwjgl3LoggerFactory : LoggerFactory {
       }
       loggers.clear()
     }
-
-    Files.createDirectories(Path("logs"))
   }
 }

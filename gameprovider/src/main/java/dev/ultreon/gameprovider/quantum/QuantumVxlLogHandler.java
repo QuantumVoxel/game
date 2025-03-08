@@ -5,6 +5,8 @@ import net.fabricmc.loader.impl.util.log.LogHandler;
 import net.fabricmc.loader.impl.util.log.LogLevel;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * A log handler for {@link QuantumVxlGameProvider} that uses the same logger as the one from the game itself.
@@ -20,6 +22,7 @@ public class QuantumVxlLogHandler implements LogHandler {
 
     static {
         try {
+            Files.createDirectories(Path.of("logs"));
             LOGGER = new Lwjgl3Logger("FabricLoader");
         } catch (IOException e) {
             throw new RuntimeException(e);
