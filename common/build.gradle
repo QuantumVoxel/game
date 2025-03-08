@@ -28,8 +28,8 @@ dependencies {
     implementation "it.unimi.dsi:fastutil-core:8.5.15"
 
     // Kryo
-    implementation "com.esotericsoftware:kryo:5.+"
-    implementation "com.esotericsoftware:kryonet:2.+"
+    implementation "com.esotericsoftware:kryo:5.6.3-SNAPSHOT"
+    implementation "com.esotericsoftware:kryonet:2.22.0-RC1"
 
     api "dev.ultreon.JNoiseJDK11:jnoise-core:a6507bcc7e", {
         exclude group: "org.jspecify", module: "jspecify"
@@ -69,7 +69,6 @@ dependencies {
 }
 
 jar {
-    archiveBaseName.set("quantum-common")
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
     dependsOn configurations.runtimeClasspath
     doLast {

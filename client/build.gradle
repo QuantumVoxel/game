@@ -92,8 +92,8 @@ dependencies {
     implementation "it.unimi.dsi:fastutil-core:8.5.15"
 
     // Kryo
-    implementation "com.esotericsoftware:kryo:5.+"
-    implementation "com.esotericsoftware:kryonet:2.+"
+    implementation "com.esotericsoftware:kryo:5.6.3-SNAPSHOT"
+    implementation "com.esotericsoftware:kryonet:2.22.0-RC1"
 
     // GraalNative
     if (enableGraalNative == 'true') {
@@ -103,8 +103,4 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-reflect:2.1.10"
 
     compileOnly "net.fabricmc:fabric-loader:$fabricLoaderVersion"
-}
-
-jar {
-    archiveBaseName.set("quantum-client")
 }
