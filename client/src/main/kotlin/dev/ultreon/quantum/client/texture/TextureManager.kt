@@ -1,5 +1,6 @@
 package dev.ultreon.quantum.client.texture
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Pixmap.Format
 import com.badlogic.gdx.graphics.Texture
@@ -35,6 +36,7 @@ class TextureManager(val resourceManager: ResourceManager) : Disposable {
   private val packers: MutableMap<String, PixmapPacker> = HashMap()
   private val warns: MutableSet<NamespaceID> = HashSet()
   private val atlasWarns: MutableSet<String> = HashSet()
+  private val blockColors: MutableMap<NamespaceID, Color> = HashMap()
 
   private var fallbackTexture: TextureRegion? = null
 
@@ -76,7 +78,7 @@ class TextureManager(val resourceManager: ResourceManager) : Disposable {
    * @param name The unique identifier for the texture atlas to be registered.
    */
   fun registerAtlas(name: String) {
-    val skylineStrategy = PixmapPacker.SkylineStrategy()
+    val skylineStrategy = PixmapPacker.GuillotineStrategy()
     packers[name] = PixmapPacker(2048, 2048, Format.RGBA8888, 0, false, skylineStrategy)
   }
 
@@ -97,7 +99,11 @@ class TextureManager(val resourceManager: ResourceManager) : Disposable {
           }
           val resource = resources.last()
           val location = resource.location
-          packer.pack("$location", Pixmap(resource.data, 0, resource.data.size))
+          val pixmap = Pixmap(resource.data, 0, resource.data.size)
+          packer.pack("$location", pixmap)
+          pixmap.averageColor(Color()).also { color ->
+            blockColors[location] = color
+          }
         } else if (resources is ResourceDirectory) {
           pack(packer, resources)
         }
@@ -172,4 +178,48 @@ class TextureManager(val resourceManager: ResourceManager) : Disposable {
       packer.disposeSafely()
     }
   }
+}
+
+private fun Pixmap.averageColor(color: Color): Color {
+  var sumRed: Long = 0
+  var sumGreen: Long = 0
+  var sumBlue: Long = 0
+  val width = this.width
+  val height = this.height
+  val totalPixels = width * height
+  var onlyAlpha = true
+
+  // Iterate over all pixels in the Pixmap
+  for (y in 0..<height) {
+    for (x in 0..<width) {
+      val pixel = this.getPixel(x, y)
+
+      // Extract the red, green, and blue components
+      val red = (pixel shr 24) and 0xFF // Extract red (0xFF000000)
+      val green = (pixel shr 16) and 0xFF // Extract green (0x00FF0000)
+      val blue = (pixel shr 8) and 0xFF // Extract blue (0x0000FF00)
+      val alpha = pixel and 0xFF // Extract alpha (0x000000FF)
+      if (alpha < 128) continue
+
+      onlyAlpha = false
+
+      // Accumulate the RGB values
+      sumRed += red.toLong()
+      sumGreen += green.toLong()
+      sumBlue += blue.toLong()
+    }
+  }
+
+  if (onlyAlpha) {
+    return color.set(0f, 0f, 0f, 0f)
+  }
+
+  // Calculate the average for each color channel
+  val avgRed = (sumRed / totalPixels).toInt()
+  val avgGreen = (sumGreen / totalPixels).toInt()
+  val avgBlue = (sumBlue / totalPixels).toInt()
+
+
+  // Pack the average color back into an integer
+  return color.set(avgRed / 255f, avgGreen / 255f, avgBlue / 255f, 1f)
 }

@@ -141,9 +141,7 @@ class EnvironmentRenderer : Disposable {
   val skybox = Skybox()
 
   init {
-    Future.runAsync { dimension!!.refreshChunks(player!!.positionComponent.position) }.apply {
-      onFailure = { logger.error("Failed to refresh chunks", it.stackTraceToString()) }
-    }
+    dimension!!.refreshChunks(player!!.positionComponent.position)
   }
 
   /**
@@ -188,17 +186,15 @@ class EnvironmentRenderer : Disposable {
 
     move(position, delta)
 
-    Future.runAsync {
-      if (!refreshing && lastRefreshTime + 1000 < System.currentTimeMillis()) {
-        if (position.position != lastRefreshPosition) {
-          this@EnvironmentRenderer.refreshing = true
-          dimension.refreshChunks(player.positionComponent.position)
-          lastRefreshTime = System.currentTimeMillis()
-          lastRefreshPosition = position.position.copy()
-          this@EnvironmentRenderer.refreshing = false
-        } else {
-          lastRefreshTime = System.currentTimeMillis()
-        }
+    if (!refreshing && lastRefreshTime + 1000 < System.currentTimeMillis()) {
+      if (position.position != lastRefreshPosition) {
+        this@EnvironmentRenderer.refreshing = true
+        dimension.refreshChunks(player.positionComponent.position)
+        lastRefreshTime = System.currentTimeMillis()
+        lastRefreshPosition = position.position.copy()
+        this@EnvironmentRenderer.refreshing = false
+      } else {
+        lastRefreshTime = System.currentTimeMillis()
       }
     }
 

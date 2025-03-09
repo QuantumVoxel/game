@@ -231,7 +231,7 @@ abstract class Dimension : Disposable, ContextAware<Dimension> {
   /**
    * Ticks the dimension.
    */
-  fun tick() {
+  open fun tick() {
 
   }
 

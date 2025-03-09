@@ -2,9 +2,9 @@ package dev.ultreon.quantum.world
 
 import com.badlogic.gdx.utils.Disposable
 import dev.ultreon.quantum.entity.Entity
-import java.util.BitSet
+import java.util.*
 
-class EntityManager(dimension: Dimension) : Disposable {
+class EntityManager(val dimension: Dimension) : Disposable {
   val takenIds = BitSet()
   val entities = HashMap<Int, Entity>()
 

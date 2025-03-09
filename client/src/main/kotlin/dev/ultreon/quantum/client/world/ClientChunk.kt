@@ -1,5 +1,6 @@
 package dev.ultreon.quantum.client.world
 
+import com.badlogic.gdx.ai.msg.PriorityQueue
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.VertexAttribute
 import com.badlogic.gdx.graphics.VertexAttributes
@@ -15,15 +16,20 @@ import dev.ultreon.quantum.blocks.Blocks
 import dev.ultreon.quantum.client.QuantumVoxel
 import dev.ultreon.quantum.client.model.FaceCull
 import dev.ultreon.quantum.client.model.ModelRegistry
+import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.client.relative
-import dev.ultreon.quantum.math.Vector3D
-import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.logger
+import dev.ultreon.quantum.math.Vector3D
 import dev.ultreon.quantum.vec3d
 import dev.ultreon.quantum.world.BlockFlags
 import dev.ultreon.quantum.world.Chunk
 import dev.ultreon.quantum.world.SIZE
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import ktx.assets.disposeSafely
+import ktx.async.AsyncExecutorDispatcher
+import ktx.async.KtxAsync
 import ktx.collections.GdxArray
 import ktx.math.vec3
 
@@ -34,6 +40,12 @@ private val lastLoad: Long get() = System.currentTimeMillis()
 
 class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val dimension: ClientDimension) : Chunk(),
   RenderableProvider {
+  private val tmp: Vector3D = Vector3D()
+  private var disposed: Boolean = false
+  var pendingDispose: Boolean = false
+    private set
+  private var buildingModel: Deferred<Unit>? = null
+  private val asyncExec: AsyncExecutorDispatcher = QuantumVoxel.executor
   private val _boundingBox: BoundingBox = BoundingBox()
   val boundingBox: BoundingBox
     get() {
@@ -53,6 +65,8 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
   private var hasBlocks: Boolean = false
   private var airBlocks: Int = SIZE * SIZE * SIZE
   private var dirty: Boolean = true
+
+  val chunkLoadQueue = PriorityQueue<ChunkPos>()
 
   val chunkPos: GridPoint3 = GridPoint3(x, y, z)
   val blocks = Array(SIZE) { Array(SIZE) { Array(SIZE) { Blocks.air } } }
@@ -107,103 +121,110 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
     }
   }
 
+  @Suppress("DeferredResultUnused")
   fun rebuild(blocking: Boolean = false) {
     dirty = false
     loading = true
 
     if (blocking) {
-      buildModel().get()
+      runBlocking { buildModel() }
     } else {
       buildModel()
     }
   }
 
-  suspend fun rebuildAsync() {
+  fun rebuildAsync() {
     dirty = false
     loading = true
 
-    buildModel()
+    this.buildingModel = buildModel().also {
+      it.invokeOnCompletion { this.buildingModel = null }
+    }
   }
 
-  fun buildModel(): Future<Unit> {
-    return Future.runAsync {
-      val builder = ModelBuilder()
-      builder.begin()
-
+  fun buildModel(): Deferred<Unit> {
+    return KtxAsync.async(quantum.executor) {
       allLoading++
-      if (allLoading > 1000 || dimension.chunks.size + allLoading > 8000) {
+      if (allLoading > 1000 || dimension.chunks.size + allLoading > 8000)
         throw ProtectionFault("Too many chunks loading")
-      }
-      QuantumVoxel {
-        val part1 = builder.part(
-          "world#default", GL20.GL_TRIANGLES, VertexAttributes(
-            VertexAttribute.Position(),
-            VertexAttribute.Normal(),
-            VertexAttribute.ColorPacked(),
-            VertexAttribute.TexCoords(0)
-          ), this@ClientChunk.material
-        )
-        for (x in 0..<SIZE) {
-          for (y in 0..<SIZE) {
-            for (z in 0..<SIZE) {
-              loadBlockInto(part1, x, y, z)
+
+      var stopping = false
+      try {
+        val builder = ModelBuilder()
+        builder.begin()
+
+        QuantumVoxel {
+          if (disposed || pendingDispose) {
+            allLoading--
+            stopping = true
+            return@QuantumVoxel
+          }
+          val part1 = builder.part(
+            "world#default", GL20.GL_TRIANGLES, VertexAttributes(
+              VertexAttribute.Position(),
+              VertexAttribute.Normal(),
+              VertexAttribute.ColorPacked(),
+              VertexAttribute.TexCoords(0)
+            ), this@ClientChunk.material
+          )
+          val part2 = builder.part(
+            "world#water", GL20.GL_TRIANGLES, VertexAttributes(
+              VertexAttribute.Position(),
+              VertexAttribute.Normal(),
+              VertexAttribute.ColorPacked(),
+              VertexAttribute.TexCoords(0)
+            ), this@ClientChunk.material
+          )
+          val part3 = builder.part(
+            "world#water", GL20.GL_TRIANGLES, VertexAttributes(
+              VertexAttribute.Position(),
+              VertexAttribute.Normal(),
+              VertexAttribute.ColorPacked(),
+              VertexAttribute.TexCoords(0)
+            ), this@ClientChunk.material
+          )
+          for (x in 0..<SIZE) {
+            for (y in 0..<SIZE) {
+              for (z in 0..<SIZE) {
+                loadBlockInto(part1, x, y, z)
+                loadBlockInto(part2, x, y, z, renderType = "water")
+                loadBlockInto(part3, x, y, z, renderType = "foliage")
+              }
             }
           }
         }
-      }
-      QuantumVoxel {
-        val part2 = builder.part(
-          "world#water", GL20.GL_TRIANGLES, VertexAttributes(
-            VertexAttribute.Position(),
-            VertexAttribute.Normal(),
-            VertexAttribute.ColorPacked(),
-            VertexAttribute.TexCoords(0)
-          ), this@ClientChunk.material
-        )
-        for (x in 0..<SIZE) {
-          for (y in 0..<SIZE) {
-            for (z in 0..<SIZE) {
-              loadBlockInto(part2, x, y, z, renderType = "water")
-            }
+
+        if (disposed || pendingDispose) {
+          if (!stopping) allLoading--
+          stopping = true
+          return@async
+        }
+
+        QuantumVoxel {
+          if (disposed || pendingDispose) {
+            if (!stopping) allLoading--
+            stopping = true
+            return@QuantumVoxel
           }
-        }
-      }
-      QuantumVoxel {
-        val part3 = builder.part(
-          "world#water", GL20.GL_TRIANGLES, VertexAttributes(
-            VertexAttribute.Position(),
-            VertexAttribute.Normal(),
-            VertexAttribute.ColorPacked(),
-            VertexAttribute.TexCoords(0)
-          ), this@ClientChunk.material
-        )
-        for (x in 0..<SIZE) {
-          for (y in 0..<SIZE) {
-            for (z in 0..<SIZE) {
-              loadBlockInto(part3, x, y, z, renderType = "foliage")
-            }
+
+          // Hotswap model and model instance
+          if (worldModelInstance != null || worldModel != null) {
+            worldModel.disposeSafely()
+            worldModel = null
+            worldModelInstance = null
           }
+
+          val model = builder.end()
+          worldModel = model
+          worldModelInstance = ModelInstance(worldModel)
+          loading = false
+          if (!stopping) allLoading--
+          stopping = true
         }
-      }
-
-
-      QuantumVoxel {
-        // Hotswap model and model instance
-        if (worldModelInstance != null || worldModel != null) {
-          worldModel.disposeSafely()
-          worldModel = null
-          worldModelInstance = null
-        }
-
-        val model = builder.end()
-        worldModel = model
-        worldModelInstance = ModelInstance(worldModel)
-        loading = false
-        allLoading--
-      }
-    }.apply {
-      onFailure = {
-        logger.error("Failed to build chunk", it)
+      } catch (it: Throwable) {
+        if (!stopping) allLoading--
+        stopping = true
+        logger.error("Failed to build chunk:\n" + it.stackTraceToString())
       }
     }
   }
@@ -252,9 +273,7 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
   }
 
   fun disposeChunk(): Boolean {
-    if (loading) {
-      return false
-    }
+    this.disposed = true
 
     worldModel.disposeSafely()
     return true
@@ -265,11 +284,15 @@ class ClientChunk(x: Int, y: Int, z: Int, private val material: Material, val di
   }
 
   fun reposition(position: Vector3D) {
-    worldModelInstance?.relative(
-      position.cpy()
+    if (tmp
+        .set(position)
         .sub(this.chunkPos.x * SIZE.toFloat(), this.chunkPos.y * SIZE.toFloat(), this.chunkPos.z * SIZE.toFloat())
-    )
+        .len() > renderDistance * SIZE
+    ) {
+      this.pendingDispose = true
+    }
 
+    worldModelInstance?.relative(tmp)
     worldModelInstance?.transform?.getTranslation(renderPosition)
   }
 

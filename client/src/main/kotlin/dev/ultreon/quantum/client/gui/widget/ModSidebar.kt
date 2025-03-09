@@ -206,7 +206,7 @@ ${mod.metadata?.contributors?.joinToString(", ") {
   }
 
   override fun tick() {
-    if ((Gdx.input.x / quantum.guiScale < 40 || Gdx.input.x / quantum.guiScale < x + width) && Gdx.input.x != 0 && Gdx.input.y != 0) {
+    if ((Gdx.input.x / quantum.guiScale < 40 || Gdx.input.x / quantum.guiScale < x + width) && !((Gdx.input.x == 0 && Gdx.input.y == 0) || (Gdx.input.x < 0 || Gdx.input.y < 0 || Gdx.input.x > Gdx.graphics.width || Gdx.input.y > Gdx.graphics.height))) {
       this.open()
     } else {
       this.close()

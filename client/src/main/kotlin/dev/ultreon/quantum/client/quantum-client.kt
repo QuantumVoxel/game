@@ -58,6 +58,7 @@ import dev.ultreon.quantum.scripting.function.function
 import dev.ultreon.quantum.util.NamespaceID
 import ktx.app.*
 import ktx.assets.disposeSafely
+import ktx.async.AsyncExecutorDispatcher
 import ktx.async.MainDispatcher
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.ModInitializer
@@ -130,7 +131,8 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
   }
 
   val clipboard: Clipboard by lazy { Gdx.app.clipboard }
-  var chunkQueue: Int = 0
+  val chunkQueue: Int
+    get() = dimension?.chunksToLoad?.size ?: 0
   val chat: ChatGui = ChatGui()
   var connection: Connection? = null
 
@@ -196,7 +198,7 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
 
   var frameTick = 0F
 
-  val executor: AsyncExecutor by lazy { AsyncExecutor(4, "QV:Async Worker") }
+  val executor: AsyncExecutorDispatcher by lazy { AsyncExecutorDispatcher(AsyncExecutor(4, "QV:Async Worker"), 4) }
 
   /**
    * Manages and organizes resources such as textures, models, and shaders.
@@ -358,6 +360,9 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
    */
   override fun dispose() {
     super.dispose()
+
+    executor.dispose()
+    Companion.executor.dispose()
 
     textureManager.dispose()
     environmentRenderer.disposeSafely()
@@ -648,10 +653,10 @@ class QuantumVoxel : KtxApplicationAdapter, KtxInputAdapter, ContextAware<Quantu
   }
 
   companion object {
-    val executor: AsyncExecutor by lazy {
-      AsyncExecutor((Runtime.getRuntime().availableProcessors() * 2).coerceAtLeast(8).also {
+    val executor: AsyncExecutorDispatcher by lazy {
+      AsyncExecutorDispatcher(AsyncExecutor((Runtime.getRuntime().availableProcessors() * 2).coerceAtLeast(8).also {
         logger.info("Quantum Client will be using $it threads")
-      })
+      }))
     }
     private val mainThread = Thread.currentThread()
 

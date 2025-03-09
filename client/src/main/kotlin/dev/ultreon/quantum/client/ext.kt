@@ -18,8 +18,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.GdxRuntimeException
-import com.badlogic.gdx.utils.Json
 import com.github.tommyettinger.textra.Font
+import com.github.tommyettinger.textra.Layout
 import dev.ultreon.quantum.InternalApi
 import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.math.Vector3D
@@ -661,6 +661,25 @@ fun Font.draw(spriteBatch: SpriteBatch, text: String, x: Float, y: Float) {
   this.drawMarkupText(spriteBatch, text, x, y-1)
   spriteBatch.color = Color.WHITE
   this.drawMarkupText(spriteBatch, text, x, y)
+}
+
+private val layout = Layout()
+
+/**
+ * Draws the text using the provided [Font] and [SpriteBatch] at the specified coordinates.
+ * This also adds a shadow effect to the text.
+ *
+ * @param spriteBatch The [SpriteBatch] to use for drawing the text.
+ * @param text The text to be drawn.
+ * @param x The x-coordinate of the text position.
+ */
+fun Font.drawRight(spriteBatch: SpriteBatch, text: String, x: Float, y: Float) {
+  layout.reset()
+  this.markup(text, layout)
+  spriteBatch.color = Color.LIGHT_GRAY
+  this.drawGlyphs(spriteBatch, layout, x - layout.width, y-1)
+  spriteBatch.color = Color.WHITE
+  this.drawGlyphs(spriteBatch, layout, x - layout.width, y)
 }
 
 /**

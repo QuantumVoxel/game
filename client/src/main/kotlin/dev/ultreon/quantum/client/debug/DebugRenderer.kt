@@ -1,6 +1,5 @@
 package dev.ultreon.quantum.client.debug
 
-import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.*
@@ -8,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.GLFrameBuffer
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
 import dev.ultreon.quantum.client.draw
+import dev.ultreon.quantum.client.drawRight
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.client.world.LocalPlayer
 import dev.ultreon.quantum.client.world.allLoading
@@ -21,17 +21,29 @@ private val runtime: Runtime = Runtime.getRuntime()
 
 class DebugRenderer {
   var line = 1
+  var lineRight = 1
   var page = 0
     private set
 
   fun render() {
     line = 1
+    lineRight = 1
 
     if (!quantum.debug) {
       return
     }
 
+    if (Gdx.input.isKeyJustPressed(Input.Keys.F4)) {
+      page = (page + 1) % 6
+    }
+
     quantum.globalBatch.use {
+      val memory = runtime.totalMemory() - runtime.freeMemory()
+      val mb = memory / 1024.0 / 1024.0
+      right("💾", "Used Memory", "${String.format(Locale.getDefault(), "%.2f", mb)} MB")
+      right("💾", "Total Memory", "${String.format(Locale.getDefault(), "%.2f", runtime.totalMemory() / 1024.0 / 1024.0)} MB")
+      right("🕒", "FPS", Gdx.graphics.framesPerSecond)
+
       val player: LocalPlayer? = quantum.player
       when (page) {
         0 -> drawDebugPage1(it, player)
@@ -68,16 +80,6 @@ class DebugRenderer {
       left("👻", "No Player", null)
     }
 
-    val memory = runtime.totalMemory() - runtime.freeMemory()
-    val mb = memory / 1024.0 / 1024.0
-    left("💾", "Used Memory", "${String.format(Locale.getDefault(), "%.2f", mb)} MB")
-    left(
-      "💾",
-      "Total Memory",
-      "${String.format(Locale.getDefault(), "%.2f", runtime.totalMemory() / 1024.0 / 1024.0)} MB"
-    )
-    left("🕒", "FPS", Gdx.graphics.framesPerSecond)
-
     left("📦", "Mesh Status", Mesh.getManagedStatus())
     left("📦", "Shader Status", ShaderProgram.getManagedStatus())
     left("📦", "Texture Status", Texture.getManagedStatus())
@@ -101,14 +103,15 @@ class DebugRenderer {
       left("🖱️", "Pointer $i Delta X", Gdx.input.getDeltaX(i))
       left("🖱️", "Pointer $i Delta Y", Gdx.input.getDeltaY(i))
     }
-
-    if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) {
-      page = (page + 1) % 6
-    }
   }
 
   fun drawDebugPage2(batch: SpriteBatch, player: LocalPlayer?) {
     left("📦", "Chunk Queue Size", quantum.chunkQueue)
+    left("📦", "Chunks To Load", quantum.dimension?.chunksToLoad?.size ?: 0)
+    left("📦", "Chunks To Remove", quantum.dimension?.toRemove?.size ?: 0)
+    left("📦", "Chunks To Rebuild", quantum.dimension?.toRebuild?.size ?: 0)
+    left("📦", "Loading chunks count", allLoading)
+    left("📦", "Loaded Chunks", quantum.dimension?.chunks?.size ?: 0)
   }
 
   fun drawDebugPage3(batch: SpriteBatch, player: LocalPlayer?) {
@@ -133,5 +136,13 @@ class DebugRenderer {
 
   fun left(emoji: String, name: String, value: Any?) {
     quantum.font.draw(quantum.globalBatch, "[+$emoji][gold]$name: [white]$value", 10f, 10f + (line++ * 10f))
+  }
+
+  fun right(name: String, value: Any?) {
+    quantum.font.drawRight(quantum.globalBatch, "[gold]$name: [white]$value", quantum.guiScale * Gdx.graphics.width - 10f, 10f + (lineRight++ * 10f))
+  }
+
+  fun right(emoji: String, name: String, value: Any?) {
+    quantum.font.drawRight(quantum.globalBatch, "[gold]$name: [white]$value [white][+$emoji]", quantum.guiScale * Gdx.graphics.width - 10f, 10f + (lineRight++ * 10f))
   }
 }
