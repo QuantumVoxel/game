@@ -1,0 +1,107 @@
+plugins {
+}
+
+apply plugin: 'org.jetbrains.kotlin.jvm'
+
+
+java.sourceCompatibility = 17
+java.targetCompatibility = 17
+if (JavaVersion.current().isJava9Compatible()) {
+    compileJava.options.release.set(17)
+}
+
+eclipse.project.name = appName + '-common'
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "17"
+}
+
+dependencies {
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+
+    testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+
+    runtimeOnly project(":lwjgl3")
+
+//  implementation "io.ktor:ktor-network:2.3.12"
+
+    api "dev.ultreon.JNoiseJDK11:jnoise-core:a6507bcc7e", {
+        exclude group: "org.jspecify", module: "jspecify"
+    }
+    api "dev.ultreon.JNoiseJDK11:jnoise-pipeline:a6507bcc7e", {
+        exclude group: "org.jspecify", module: "jspecify"
+    }
+    api "dev.ultreon.JNoiseJDK11:jnoise-generators:a6507bcc7e", {
+        exclude group: "org.jspecify", module: "jspecify"
+    }
+    api "dev.ultreon.JNoiseJDK11:jnoise-modifiers:a6507bcc7e", {
+        exclude group: "org.jspecify", module: "jspecify"
+    }
+    api "dev.ultreon.JNoiseJDK11:jnoise-modules:a6507bcc7e", {
+        exclude group: "org.jspecify", module: "jspecify"
+    }
+
+    api "io.github.libktx:ktx-app:$ktxVersion"
+    api "io.github.libktx:ktx-artemis:$ktxVersion"
+    api "io.github.libktx:ktx-assets-async:$ktxVersion"
+    api "io.github.libktx:ktx-assets:$ktxVersion"
+    api "io.github.libktx:ktx-async:$ktxVersion"
+    api "io.github.libktx:ktx-collections:$ktxVersion"
+    api "io.github.libktx:ktx-i18n:$ktxVersion"
+    api "io.github.libktx:ktx-inject:$ktxVersion"
+    api "io.github.libktx:ktx-json:$ktxVersion"
+    api "io.github.libktx:ktx-log:$ktxVersion"
+    api "io.github.libktx:ktx-math:$ktxVersion"
+    api "io.github.libktx:ktx-preferences:$ktxVersion"
+    api "io.github.libktx:ktx-reflect:$ktxVersion"
+
+    api "dev.ultreon:scriptic-lang:0.1-SNAPSHOT"
+
+    //noinspection GradleDependency
+    implementation "org.jetbrains.kotlin:kotlin-reflect:2.1.10"
+
+    // ASM
+    implementation "org.ow2.asm:asm:$asmVersion"
+    implementation "org.ow2.asm:asm-commons:$asmVersion"
+    implementation "org.ow2.asm:asm-tree:$asmVersion"
+
+    implementation api("net.fabricmc:fabric-loader:$fabricLoaderVersion")
+
+    // Fabric Mixin
+    implementation api("net.fabricmc:sponge-mixin:0.15.5+mixin.0.8.7")
+}
+
+jar {
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+    dependsOn configurations.runtimeClasspath
+    doLast {
+        file(archiveFile).setExecutable(true, false)
+    }
+}
+
+
+// Equivalent to the jar task; here for compatibility with gdx-setup.
+tasks.register('dist') {
+    dependsOn 'jar'
+}
+
+tasks.test {
+    useTestNG()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    description = "Runs the Kotlin test suite."
+    group = "verification"
+}
+
+
+processResources {
+    inputs.property("quantum_version", project(":client").version)
+    inputs.property("gdx_version", gdxVersion)
+
+    filesMatching("versions.properties") {
+        expand project.properties + [quantum_version: project(":client").version]
+        expand project.properties + [gdx_version: gdxVersion]
+    }
+
+    exclude "*.pdn", "*.xcf", "*.ps"
+}

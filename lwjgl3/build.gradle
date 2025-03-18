@@ -26,13 +26,13 @@ sourceSets.main.resources.srcDirs += [rootProject.file('assets').path, rootProje
 mainClassName = 'dev.ultreon.quantum.lwjgl3.Lwjgl3Launcher'
 application.setMainClass(mainClassName)
 eclipse.project.name = appName + '-lwjgl3'
-java.sourceCompatibility = 11
-java.targetCompatibility = 11
+java.sourceCompatibility = 17
+java.targetCompatibility = 17
 if (JavaVersion.current().isJava9Compatible()) {
-    compileJava.options.release.set(11)
+    compileJava.options.release.set(17)
 }
-kotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
-compileKotlin.kotlinOptions.jvmTarget = "11"
+kotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
+compileKotlin.kotlinOptions.jvmTarget = "17"
 
 dependencies {
     implementation "com.badlogicgames.gdx-controllers:gdx-controllers-desktop:$gdxControllersVersion"
@@ -84,6 +84,8 @@ dependencies {
     api 'io.socket:socket.io-client:2.1.1'
     api 'io.socket:socket.io-server:4.1.2'
     api("jakarta.servlet:jakarta.servlet-api:6.1.0")
+
+    compileOnly "net.fabricmc:fabric-loader:$fabricLoaderVersion"
 }
 
 def os = System.properties['os.name'].toLowerCase()
@@ -94,14 +96,15 @@ run {
     workingDir = rootProject.file('run').path
     setIgnoreExitValue(false)
 
+    classpath = project(":gameprovider").sourceSets.main.runtimeClasspath
+    mainClass = "net.fabricmc.loader.impl.launch.knot.KnotClient"
+
 //  jvmArgs += "-agentlib:native-image-agent=config-output-dir=./config."
 
     if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
 }
 
 jar {
-// sets the name of the .jar file this produces to the name of the game or app, with the version after.
-    archiveFileName.set("quantum-lwjgl3-${projectVersion}.jar")
 // the duplicatesStrategy matters starting in Gradle 7.0; this setting works.
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 // these "exclude" lines remove some unnecessary duplicate files in the output JAR.
@@ -163,9 +166,7 @@ tasks.register('dist') {
 }
 
 tasks.register('setup') {
-    dependsOn 'jar'
-    dependsOn ':client:jar'
-    dependsOn ':common:jar'
+    dependsOn 'jar', ':client:jar', ':common:jar', ':gameprovider:jar', ':server:jar'
 
     doLast {
         file('build/setup').mkdirs()
@@ -181,12 +182,32 @@ tasks.register('setup') {
         }
 
         copy {
+            from project(':server').configurations.runtimeClasspath
+            into 'build/setup/lib'
+        }
+
+        copy {
             from project(':common').configurations.runtimeClasspath
             into 'build/setup/lib'
         }
 
         copy {
+            from project(':gameprovider').configurations.runtimeClasspath
+            into 'build/setup/lib'
+        }
+
+        copy {
             from project(':client').tasks.jar.outputs.files
+            into 'build/setup/lib'
+        }
+
+        copy {
+            from project(':server').tasks.jar.outputs.files
+            into 'build/setup/lib'
+        }
+
+        copy {
+            from project(':gameprovider').tasks.jar.outputs.files
             into 'build/setup/lib'
         }
 

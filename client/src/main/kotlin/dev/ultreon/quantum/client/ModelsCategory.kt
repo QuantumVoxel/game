@@ -2,6 +2,12 @@ package dev.ultreon.quantum.client
 
 import dev.ultreon.quantum.resource.*
 
+/**
+ * The models category.
+ * This category is used to store all models.
+ *
+ * @constructor Creates a new ModelsCategory.
+ */
 class ModelsCategory : ResourceCategory {
   override val name: String = "models"
   override val parent: ResourceCategory? = null

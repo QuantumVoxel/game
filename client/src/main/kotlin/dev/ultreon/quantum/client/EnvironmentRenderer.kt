@@ -19,8 +19,9 @@ import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
 import com.github.tommyettinger.textra.Layout
+import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.blocks.Blocks
-import dev.ultreon.quantum.client.gui.screens.IdScreen
+import dev.ultreon.quantum.client.gui.screens.PauseScreen
 import dev.ultreon.quantum.client.gui.screens.screen
 import dev.ultreon.quantum.client.input.KeyBinds
 import dev.ultreon.quantum.client.world.Skybox
@@ -28,19 +29,27 @@ import dev.ultreon.quantum.entity.PositionComponent
 import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.math.Vector3D
-import dev.ultreon.quantum.async.Future
 import dev.ultreon.quantum.util.BlockHit
 import dev.ultreon.quantum.util.NamespaceID
-import dev.ultreon.quantum.util.id
 import dev.ultreon.quantum.vec3d
-import kotlinx.coroutines.launch
 import ktx.app.clearScreen
 import ktx.assets.disposeSafely
-import ktx.async.KtxAsync
 import ktx.math.vec3
 
 private val tmp1 = vec3()
 
+/**
+ * Creates a new [ModelBatch] instance with the default shader provider and renderable sorter.
+ * The default shader provider is used to create a new [DefaultShader]` instance for each renderable
+ * object, while the renderable sorter is used to sort the renderables before rendering.
+ *
+ * The [ModelBatch] is used to render 3D models in the game world and provides a simple interface
+ * for rendering and managing 3D models in a scene.
+ *
+ * @return A new [ModelBatch] instance with the default shader provider and renderable sorter.
+ * @see DefaultShaderProvider
+ * @see DefaultRenderableSorter
+ */
 fun modelBatch() = ModelBatch(
   if (gamePlatform.isWebGL3 || gamePlatform.isGL30 || gamePlatform.isGLES3) {
     object : DefaultShaderProvider(
@@ -71,12 +80,20 @@ fun modelBatch() = ModelBatch(
  * with the game world. This class implements the `KtxScreen` interface and handles functionality
  * such as input handling, rendering, player movement, camera operations, and resource management.
  *
- * The `GameScreen` for example manages:
- * - Rendering 3D models and 2D overlays.
- * - Camera and viewport configurations.
- * - Input processing for movement, actions, and interaction.
- * - Player entity initialization and behavior updates.
- * - Environmental light and textures.
+ * @property camera The perspective camera used for rendering the game world.
+ * @property vel The velocity vector used for player movement.
+ * @property moveX The horizontal movement amount for the player.
+ * @property moveY The vertical movement amount for the player.
+ * @property forward Whether the player is moving forward.
+ * @property backward Whether the player is moving backward.
+ * @property strafeLeft Whether the player is strafing left.
+ * @property strafeRight Whether the player is strafing right.
+ * @property up Whether the player is moving up.
+ * @property down Whether the player is moving down.
+ * @property environment The environment used for rendering the game world.
+ * @property modelBatch The model batch used for rendering 3D models in the game world.
+ * @property font The font used for rendering text in the game world.
+ * @property spriteBatch The sprite batch used for rendering 2D elements in the game world.
  *
  * @constructor Creates a `GameScreen` instance that initializes the game world, rendering environment,
  *              camera, player entity, and necessary assets.
@@ -284,7 +301,7 @@ class EnvironmentRenderer : Disposable {
     if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) && !gamePlatform.isMobile) {
       if (Gdx.input.isCursorCatched) {
         quantum.submit {
-          quantum.showScreen(IdScreen.get(id(path = "pause")) ?: run {
+          quantum.showScreen(PauseScreen() ?: run {
             logger.error("No pause screen found")
             return@submit
           })

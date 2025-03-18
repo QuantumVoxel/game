@@ -324,7 +324,7 @@ void main() {
     #ifdef shadowMapFlag
     vec3 lighting = vec3(getShadow());
     #else
-    vec3 lighting = vec3(1.0, 0.0, 0.0);
+    vec3 lighting = vec3(1.0, 1.0, 1.0);
     #endif
 
     #ifdef fogFlag

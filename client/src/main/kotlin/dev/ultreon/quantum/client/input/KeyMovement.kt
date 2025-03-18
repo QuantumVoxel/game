@@ -2,6 +2,21 @@ package dev.ultreon.quantum.client.input
 
 import ktx.math.vec2
 
+/**
+ * Represents the movement of the player using the keyboard.
+ *
+ * @constructor Creates a new key movement.
+ *
+ * @property forward Whether the player is moving forward.
+ * @property backward Whether the player is moving backward.
+ * @property strafeLeft Whether the player is strafing left.
+ * @property strafeRight Whether the player is strafing right.
+ * @property up Whether the player is moving up.
+ * @property down Whether the player is moving down.
+ * @property motionX The horizontal x-axis movement amount for the player.
+ * @property motionZ The horizontal z-axis movement amount for the player.
+ * @property movement The movement vector of the player.
+ */
 class KeyMovement : PlayerMovement {
   var forward = false
   var backward = false
@@ -15,6 +30,9 @@ class KeyMovement : PlayerMovement {
 
   override var movement = vec2()
 
+  /**
+   * Updates the player movement with keyboard inputs.
+   */
   override fun update() {
     forward = KeyBinds.walkForwardsKey.isJustPressed()
     backward = KeyBinds.walkBackwardsKey.isJustPressed()
@@ -33,6 +51,9 @@ class KeyMovement : PlayerMovement {
     movement.set(motionX, motionZ).nor()
   }
 
+  /**
+   * Resets the player movement.
+   */
   override fun reset() {
     forward = false
     backward = false

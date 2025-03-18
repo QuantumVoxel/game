@@ -5,6 +5,9 @@ import com.badlogic.gdx.utils.SharedLibraryLoader
 import dev.ultreon.quantum.gamePlatform
 import dev.ultreon.quantum.scripting.condition.VirtualCondition
 
+/**
+ * Conditions that are specific to the client.
+ */
 object ClientConditions {
   val platform = VirtualCondition { callContext ->
     val value = callContext.getString("platform") ?: return@VirtualCondition false

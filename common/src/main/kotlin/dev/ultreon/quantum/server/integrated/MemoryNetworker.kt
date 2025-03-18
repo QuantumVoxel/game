@@ -1,7 +1,9 @@
 package dev.ultreon.quantum.server.integrated
 
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.network.Networker
 
+@ExperimentalApi
 class MemoryNetworker : Networker {
   override fun init() {
 

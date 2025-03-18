@@ -1,8 +1,10 @@
 package dev.ultreon.quantum.network
 
+import dev.ultreon.quantum.ExperimentalApi
 import ktx.collections.GdxByteArray
 import java.io.EOFException
 
+@ExperimentalApi
 class PacketBuffer(val data: GdxByteArray, val mode: Mode = Mode.READ) {
   var pos: Int = 0
     private set

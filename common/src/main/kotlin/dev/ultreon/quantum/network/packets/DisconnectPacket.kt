@@ -1,9 +1,11 @@
 package dev.ultreon.quantum.network.packets
 
+import dev.ultreon.quantum.ExperimentalApi
 import dev.ultreon.quantum.network.Packet
 import dev.ultreon.quantum.network.PacketContext
 import dev.ultreon.quantum.network.PacketIO
 
+@ExperimentalApi
 data class DisconnectPacket(val reason: String) : Packet("disconnect") {
   override fun write(io: PacketIO) {
     io.writeString(reason)

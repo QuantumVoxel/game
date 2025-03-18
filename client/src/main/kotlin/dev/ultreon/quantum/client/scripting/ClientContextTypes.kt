@@ -7,6 +7,13 @@ import dev.ultreon.quantum.scripting.ContextType
 import dev.ultreon.quantum.scripting.ContextValue
 import dev.ultreon.quantum.util.asIdOrNull
 
+/**
+ * Context types for client-side scripting contexts.
+ * This object contains all the context types that are available on the client-side.
+ *
+ * @see ContextType
+ * @see ContextValue
+ */
 object ClientContextTypes {
   val localPlayer = ContextType.register("local-player", parser = {
     return@register quantum.player?.let { ContextValue(this, it ) }

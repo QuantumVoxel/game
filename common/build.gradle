@@ -21,7 +21,15 @@ dependencies {
 
     testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
 
-//  implementation "io.ktor:ktor-network:2.3.12"
+    // Guava
+    implementation "com.google.guava:guava:33.4.0-jre"
+
+    // FastUtils
+    implementation "it.unimi.dsi:fastutil-core:8.5.15"
+
+    // Kryo
+    implementation "com.esotericsoftware:kryo:5.6.3-SNAPSHOT"
+    implementation "com.esotericsoftware:kryonet:2.22.0-RC1"
 
     api "dev.ultreon.JNoiseJDK11:jnoise-core:a6507bcc7e", {
         exclude group: "org.jspecify", module: "jspecify"
@@ -55,11 +63,12 @@ dependencies {
 
     api "dev.ultreon:scriptic-lang:0.1-SNAPSHOT"
 
-    implementation "org.jetbrains.kotlin:kotlin-reflect:2.1.0"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:2.1.10"
+
+    compileOnly "net.fabricmc:fabric-loader:$fabricLoaderVersion"
 }
 
 jar {
-    archiveBaseName.set("quantum-common")
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
     dependsOn configurations.runtimeClasspath
     doLast {

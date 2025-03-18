@@ -2,12 +2,12 @@ package dev.ultreon.quantum.client.gui.widget
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.utils.JsonValue
+import dev.ultreon.quantum.client.TitleScreen
 import dev.ultreon.quantum.client.gui.screens.IdScreen
 import dev.ultreon.quantum.client.gui.screens.PlaceholderScreen
 import dev.ultreon.quantum.client.quantum
 import dev.ultreon.quantum.logger
 import dev.ultreon.quantum.util.asIdOrNull
-import dev.ultreon.quantum.util.id
 
 object UiAction {
   fun of(json: JsonValue): (Widget) -> Unit {
@@ -40,10 +40,7 @@ object UiAction {
           logger.info("Exiting world")
           quantum.stopWorld {
             Gdx.input.isCursorCatched = false
-            quantum.showScreen(IdScreen.get(id(path = "title")) ?: run {
-              logger.error("Title screen not found")
-              PlaceholderScreen
-            })
+            quantum.showScreen(TitleScreen())
           }
         }
       }
@@ -61,10 +58,7 @@ object UiAction {
             Gdx.input.isCursorCatched = true
             PlaceholderScreen
           } else {
-            IdScreen.get(id(path = "title")) ?: run {
-              logger.error("Title screen not found")
-              PlaceholderScreen
-            }
+            TitleScreen()
           })
         }
       }
