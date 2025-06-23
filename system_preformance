@@ -1,0 +1,36 @@
+how Qauntum voxel preforms systems
+this is more for data purposes i will probs push this once i get it working
+template
+computer name:
+OS:
+CPU
+RAM
+GPU
+opengl:
+Status:
+fps :
+Version:
+
+guinea7pigs computers (i have at least 17 of the them, mostly old netbooks)
+macbook air m1 
+OS:ashia linux fedora remix/mac os
+CPU:m1
+RAM:8 GB
+GPU:m1 (7 cores)
+opengl: 4.6
+Status:dosent launch
+fps:n/a
+error: Error: Could not find or load main class lib.artemis-odb-2.3.0.jar(mac os)
+Version:0.04
+
+
+toshiba nb305 
+OS: debain with lxqt
+CPU:Intel Atom N450 @ 1.66GHz
+RAM:2 GB
+GPU: Intel GMA 3150
+opengl:2.0 (wont launch beacuse of gl problelms idk why)
+Status: not launching 
+fps:n/a
+Version:0.01
+//mabye some more preformance metrics
