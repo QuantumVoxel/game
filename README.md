@@ -1,3 +1,9 @@
+> [!WARNING]
+> **QV:RECOMPUTED DEPRECATION**
+> 
+> This was a rewrite attempt to turn [Quantum Voxel](https://github.com/QuantumVoxel/quantum-voxel) into a Kotlin based game. But since Mixins don't like Kotlin that much this attempt has been cancelled.
+> It's recommended to use the [QuantumVoxel/quantum-voxel](https://github.com/QuantumVoxel/quantum-voxel) repostitory instead.
+
 # Quantum Voxel: Recomputed
 
 Quantum Voxel: Recomputed. Rewritten in Kotlin now!
